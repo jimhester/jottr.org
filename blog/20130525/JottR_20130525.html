@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<!-- saved from url=(0014)about:internet -->
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+<title>Speed trick: Assigning large object NULL is much faster than using rm()!</title>
+
+<style type="text/css">
+body, td {
+   font-family: sans-serif;
+   background-color: white;
+   font-size: 12px;
+   margin: 8px;
+}
+
+tt, code, pre {
+   font-family: 'DejaVu Sans Mono', 'Droid Sans Mono', 'Lucida Console', Consolas, Monaco, monospace;
+}
+
+h1 { 
+   font-size:2.2em; 
+}
+
+h2 { 
+   font-size:1.8em; 
+}
+
+h3 { 
+   font-size:1.4em; 
+}
+
+h4 { 
+   font-size:1.0em; 
+}
+
+h5 { 
+   font-size:0.9em; 
+}
+
+h6 { 
+   font-size:0.8em; 
+}
+
+a:visited {
+   color: rgb(50%, 0%, 50%);
+}
+
+pre {	
+   margin-top: 0;
+   max-width: 95%;
+   border: 1px solid #ccc;
+   white-space: pre-wrap;
+}
+
+pre code {
+   display: block; padding: 0.5em;
+}
+
+code.r, code.cpp {
+   background-color: #F8F8F8;
+}
+
+table, td, th {
+  border: none;
+}
+
+blockquote {
+   color:#666666;
+   margin:0;
+   padding-left: 1em;
+   border-left: 0.5em #EEE solid;
+}
+
+hr {
+   height: 0px;
+   border-bottom: none;
+   border-top-width: thin;
+   border-top-style: dotted;
+   border-top-color: #999999;
+}
+
+@media print {
+   * { 
+      background: transparent !important; 
+      color: black !important; 
+      filter:none !important; 
+      -ms-filter: none !important; 
+   }
+
+   body { 
+      font-size:12pt; 
+      max-width:100%; 
+   }
+       
+   a, a:visited { 
+      text-decoration: underline; 
+   }
+
+   hr { 
+      visibility: hidden;
+      page-break-before: always;
+   }
+
+   pre, blockquote { 
+      padding-right: 1em; 
+      page-break-inside: avoid; 
+   }
+
+   tr, img { 
+      page-break-inside: avoid; 
+   }
+
+   img { 
+      max-width: 100% !important; 
+   }
+
+   @page :left { 
+      margin: 15mm 20mm 15mm 10mm; 
+   }
+     
+   @page :right { 
+      margin: 15mm 10mm 15mm 20mm; 
+   }
+
+   p, h2, h3 { 
+      orphans: 3; widows: 3; 
+   }
+
+   h2, h3 { 
+      page-break-after: avoid; 
+   }
+}
+</style>
+
+
+
+
+
+</head>
+
+<body>
+<h1>Speed trick: Assigning large object NULL is much faster than using rm()!</h1>
+
+<p>When processing large data sets in R you often also end up creating large temporary objects.  In order to keep the memory footprint small, it is always good to remove those temporary objects as soon as possible.  When done, removed objects will be deallocated from memory (RAM) the next time the garbage collection runs.</p>
+
+<h2>Better: Use <code>rm(list=&quot;x&quot;)</code> instead of <code>rm(x)</code>, if using <code>rm()</code></h2>
+
+<p>To remove an object in R, one can use the <code>rm()</code> function (with alias <code>remove()</code>). However, it turns out that that function has quite a bit of internal overhead (look at its R code), particularly if you call it as <code>rm(x)</code> rather than <code>rm(list=&quot;x&quot;)</code>.  The former takes about three times longer to complete.  Example:</p>
+
+<pre><code>&gt; t1 &lt;- system.time(for (k in 1:1e5) { a &lt;- 1; rm(a); })
+&gt; t2 &lt;- system.time(for (k in 1:1e5) { a &lt;- 1; rm(list=&quot;a&quot;); })
+&gt; t1
+   user  system elapsed
+  10.45    0.00   10.50
+&gt; t2
+   user  system elapsed
+   2.93    0.00    2.94
+&gt; t1/t2
+    user   system  elapsed
+3.566553      NaN 3.571429
+</code></pre>
+
+<p>Note: In order to minimize the impact of the memory allocation on the benchmark, I use <code>&#39;a &lt;- 1&#39;</code> to represent the &ldquo;large&rdquo; object.</p>
+
+<h2>Best: Use x &lt;- NULL instead of rm()</h2>
+
+<p>Instead of using <code>rm(list=&quot;x&quot;)</code>, which still has a fair amount of overhead, one can remove a large active object by assigning the corresponding variable a new value (a small object), e.g.  <code>x &lt;- NULL</code>.  Whenever doing this, the previously assigned value (the large object) will become available for garbage collection. Example:</p>
+
+<pre><code>&gt; t3 &lt;- system.time(for (k in 1:1e5) { a &lt;- 1; a &lt;- NULL; })
+&gt; t3
+   user  system elapsed
+   0.05    0.00    0.05
+&gt; t1/t3
+   user  system elapsed
+    209     NaN     210
+</code></pre>
+
+<p>That&#39;s a <strong>200 times speedup</strong>!</p>
+
+<h2>Background</h2>
+
+<p>I &ldquo;accidentally&rdquo; discovered this when profiling <code>readMat()</code> in my <a href="http://cran.r-project.org/web/packages/R.matlab/">R.matlab</a> package.  In particular, there was one rm(x) call inside a local function that was called thousands of times when parsing modestly large MAT files.  Together with some additional optimizations, R.matlab v2.0.0 (to be appear) is now 10-20 times faster.  Now I&#39;m going to review all my other packages for expensive <code>rm()</code> calls.</p>
+
+</body>
+
+</html>
