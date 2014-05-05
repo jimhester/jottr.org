@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+<title>How to: Git SVN for R-Forge</title>
+
+
+
+
+
+<style type="text/css">
+body, td {
+   font-family: sans-serif;
+   background-color: white;
+   font-size: 13px;
+}
+
+body {
+  max-width: 800px;
+  margin: auto;
+  line-height: 20px;
+}
+
+tt, code, pre {
+   font-family: 'DejaVu Sans Mono', 'Droid Sans Mono', 'Lucida Console', Consolas, Monaco, monospace;
+}
+
+h1 { 
+   font-size:2.2em; 
+}
+
+h2 { 
+   font-size:1.8em; 
+}
+
+h3 { 
+   font-size:1.4em; 
+}
+
+h4 { 
+   font-size:1.0em; 
+}
+
+h5 { 
+   font-size:0.9em; 
+}
+
+h6 { 
+   font-size:0.8em; 
+}
+
+a:visited {
+   color: rgb(50%, 0%, 50%);
+}
+
+pre, img {
+  max-width: 100%;
+}
+
+pre code {
+   display: block; padding: 0.5em;
+}
+
+code {
+  font-size: 92%;
+  border: 1px solid #ccc;
+}
+
+code[class] {
+  background-color: #F8F8F8;
+}
+
+table, td, th {
+  border: none;
+}
+
+blockquote {
+   color:#666666;
+   margin:0;
+   padding-left: 1em;
+   border-left: 0.5em #EEE solid;
+}
+
+hr {
+   height: 0px;
+   border-bottom: none;
+   border-top-width: thin;
+   border-top-style: dotted;
+   border-top-color: #999999;
+}
+
+@media print {
+   * { 
+      background: transparent !important; 
+      color: black !important; 
+      filter:none !important; 
+      -ms-filter: none !important; 
+   }
+
+   body { 
+      font-size:12pt; 
+      max-width:100%; 
+   }
+       
+   a, a:visited { 
+      text-decoration: underline; 
+   }
+
+   hr { 
+      visibility: hidden;
+      page-break-before: always;
+   }
+
+   pre, blockquote { 
+      padding-right: 1em; 
+      page-break-inside: avoid; 
+   }
+
+   tr, img { 
+      page-break-inside: avoid; 
+   }
+
+   img { 
+      max-width: 100% !important; 
+   }
+
+   @page :left { 
+      margin: 15mm 20mm 15mm 10mm; 
+   }
+     
+   @page :right { 
+      margin: 15mm 10mm 15mm 20mm; 
+   }
+
+   p, h2, h3 { 
+      orphans: 3; widows: 3; 
+   }
+
+   h2, h3 { 
+      page-break-after: avoid; 
+   }
+}
+</style>
+
+
+
+</head>
+
+<body>
+<h1>How to: Git SVN for R-Forge</h1>
+
+<p>by Henrik Bengtsson on 2014-05-04</p>
+
+<p>This document explains how to (bi-directionally) access your <a href="http://r-forge.r-project.org/">R-Forge</a> repository using <a href="http://git-scm.com/">Git</a> instead of <a href="http://subversion.apache.org/">Subversion</a>.  We will cover three important things:</p>
+
+<ol>
+<li>How to setup a Subversion-to-Git map for author annotations.</li>
+<li>How to clone (&ldquo;checkout&rdquo;) a Subversion repository.</li>
+<li>How to setup an &ldquo;R-Forge&rdquo; branch in Git that represents whats on R-Forge.</li>
+<li>How to to update and commit via the R-Forge branch.</li>
+</ol>
+
+<h2>Introduction</h2>
+
+<p>Although the instructions herein are long, they are only so to make sure that we carefully walk through the details at least once.  As soon as you get the gist of if, everything is very simply and you&#39;ll be very quick in doing this yourself.</p>
+
+<p>So, when you understand Git, it is very easy, but the learning curve might be a bit steep.  The only complicated task is to under how author annotations are mapped between Git and Subversion and to accept that it may be too much work to have Subversion reflect the proper author information when contributed via Git (the R-Forge submitter [=you] will become the author of those commits at R-Forge).</p>
+
+<p>Cheat sheet:</p>
+
+<ul>
+<li><code>svn checkout</code> = <code>git svn clone &lt;url&gt;</code></li>
+<li><code>svn update</code>   = <code>git svn rebase</code></li>
+<li><code>svn commit</code>   = <code>git svn dcommit</code></li>
+<li><code>svn info</code>     = <code>git svn info</code></li>
+</ul>
+
+<h2>A one time important step before anything else</h2>
+
+<pre><code>&gt; git config --global svn.authorsfile ~/.gitauthors
+</code></pre>
+
+<p>On Windows, you have to do:</p>
+
+<pre><code>&gt; git config --global svn.authorsfile %HOME%\.gitauthors
+</code></pre>
+
+<p>Using <code>git config --global</code> will query/modify/create <code>~/.gitconfig</code>, which is a &ldquo;global&rdquo; user-specific Git configuration file that will be used by all <code>git</code> calls, meaning the above setting <code>svn.authorsfile</code> will be used in all your Git interactions for all your R packages.  Don&#39;t worry, it&#39;s settings can be overridden locally by <code>git config --local</code> which edits <code>./.git/config</code>, but now where getting ahead of ourselves.</p>
+
+<h2>Checkout your R-Forge package as a Git repository</h2>
+
+<pre><code>&gt; git svn --use-log-author clone svn+ssh://henrikb@svn.r-forge.r-project.org/svnroot/r-dots/pkg/R.synchronize
+
+Initialized empty Git repository in x:/_GITHUB/R-Forge exports/r-dots/foo/R.methodsS3/R.menu/.git/
+W: Ignoring error from SVN, path probably does not exist: (160013):
+   Filesystem has no item: File not found: revision 100, path &#39;/pkg/R.synchronize&#39;
+W: Do not be alarmed at the above message git-svn is just searching aggressively for old history.
+This may take a while on large repositories
+Checked Ahrough R/000.R
+        A       R/006.fixVarArgs.R
+        A       R/SocketMutexServer.R
+        A       R/NullFileLock.R
+        A       R/999.package.R
+        A       R/999.NonDocumentedObjects.R
+        A       R/AbstractMutex.R
+        A       R/FileLock.R
+        A       R/999.missingdocs.txt
+        A       R/SocketMutex.R
+        A       R/NullMutex.R
+        A       R/zzz.R
+        A       DESCRIPTION
+        A       incl/BengtssonH_2003.bib.Rdoc
+        A       incl/SocketMutexServer.Rex
+        A       incl/FileLock.Rex
+        A       incl/SocketMutex.Rex
+        A       man/SocketMutex.Rd
+        A       man/NullMutex.Rd
+        A       man/R.synchronize-package.Rd
+        A       man/AbstractMutex.Rd
+        A       man/FileLock.Rd
+        A       man/Non-documented_objects.Rd
+        A       inst/testScripts/system/locks/test20090526-lock.Rex
+        A       inst/NEWS
+r238 = 2f8f4021436d10a2808b80c18b0d0b97d767b118 (refs/remotes/git-svn)
+        D       R/999.missingdocs.txt
+        M       R/999.NonDocumentedObjects.R
+        A       incl/999.missingdocs.txt
+W: -empty_dir: R/999.missingdocs.txt
+r243 = 123a39e8c1fb324d7f40c3feee3629fa3e600ca5 (refs/remotes/git-svn)
+Checked out HEAD:
+  svn+ssh://henrikb@svn.r-forge.r-project.org/svnroot/r-dots/pkg/R.synchronize r243
+</code></pre>
+
+<p>That&#39;s pretty much it.  The reason we <code>--use-log-author</code> is &ldquo;just in case&rdquo; and will be explained further below.</p>
+
+<p>To verify that it worked, you can for instance check the <em>Git</em> log for the most recent commit;</p>
+
+<pre><code>&gt; git log -1
+commit 123a39e8c1fb324d7f40c3feee3629fa3e600ca5
+Author: henrikb &lt;henrikb@edb9625f-4e0d-4859-8d74-9fd3b1da38cb&gt;
+Date:   Fri Jun 5 18:37:04 2009 +0000
+
+    Further rearrangements for passing R CMD check without prefiltering files.
+
+    git-svn-id: svn+ssh://svn.r-forge.r-project.org/svnroot/r-dots/pkg/R.synchro
+</code></pre>
+
+<p>Note that the above displays the log of your (local) Git repository.  To check the log of the (R-Forge) Subversion repository, do</p>
+
+<pre><code>&gt; git svn log -1
+------------------------------------------------------------------------
+r243 | henrikb | 2009-06-05 11:37:04 -0700 (Fri, 05 Jun 2009) | 2 lines
+
+Further rearrangements for passing R CMD check without prefiltering files.
+
+------------------------------------------------------------------------
+</code></pre>
+
+<p>Of course, since there hasn&#39;t been any commits (to neither the Git nor the Subversion repository), the above two logs should the same information.</p>
+
+<h3>Windows only: Fix Git mistake</h3>
+
+<p>Git &ldquo;cloning&rdquo; does not handle the fact that you have a colon in your settings:</p>
+
+<pre><code>git config --global svn.authorsfile
+C:\\Users\\hb/.gitauthors
+</code></pre>
+
+<p>Because of this, it will incorrectly add a &ldquo;local&rdquo; version of this setting that will override the &ldquo;global&rdquo; one:</p>
+
+<pre><code>git config --local svn.authorsfile
+x:\\work\\path\\C;C:\\Program Files (x86)\\Git\\Users\\hb\\.gitauthors
+</code></pre>
+
+<p>which later will cause error messages about not finding the authors file.
+To fix this, let&#39;s just drop it again:</p>
+
+<pre><code>git config --local --unset svn.authorsfile
+</code></pre>
+
+<h2>Creating a &ldquo;R-Forge&rdquo; branch reflecting what&#39;s on R-Forge</h2>
+
+<p>While developing new features to your package, you have probably sometimes found yourself copying the complete package directory to an separate location to avoid having your new trial-and-error development clutter up your &ldquo;master&rdquo; version.  Also, while working on this &ldquo;devel&rdquo; branch, you no longer keep track of versions and your modifications are not backed up (at least not via R-Forge).  Finally, when you&#39;ve finished this work, you&#39;ve then copied files back into the &ldquo;master&rdquo; directory and commiting to R-Forge.</p>
+
+<p>With Git, the above manual copying is completely unnecessary.  Instead Git will let you switch to your &ldquo;devel&rdquo; branch with a simple &ldquo;checkout&rdquo; command, while keeping your &ldquo;master&rdquo; branch safe and hidden.  Git will automatically switch your files &ldquo;in and out&rdquo; between branches.  The best thing, all your work is under version control and part of the Git repository.</p>
+
+<p>Since you will wonder, working with multiple branches is lightweight, i.e. the overhead in additional disk space when adding a new branch basically corresponds to the size of the text message you add to a commit.  Also, Git switches between branches ridicolously fast - it&#39;s so fast that first timers tend to verify it manually, because they didn&#39;t even notice the switch.  In other words, there is no overhead costs working with branches in Git.</p>
+
+<p>Although you can always to it later (also retroactively), it&#39;s easier to create the &ldquo;R-Forge&rdquo; branch immediately after &ldquo;cloning&rdquo; the Subversion to Git.  Any Git repository always has a &ldquo;master&rdquo; branch, so does ours:</p>
+
+<pre><code>&gt; git branch
+* master
+</code></pre>
+
+<p>Now, lets create the &ldquo;R-Forge&rdquo; branch:</p>
+
+<pre><code>&gt; git branch R-Forge
+</code></pre>
+
+<p>and confirm that it&#39;s added:</p>
+
+<pre><code>&gt; git branch
+  R-Forge
+* master
+</code></pre>
+
+<p>The asterisk in front of &#39;master&#39; indicates that this is the currently &ldquo;checked out&rdquo; branch, which means that the files you see in the working directory reflects those in the &ldquo;master&rdquo; branch.  To switch to the &ldquo;R-Forge&rdquo; branch, do:</p>
+
+<pre><code>&gt; git checkout R-Forge
+Switched to branch &#39;R-Forge&#39;
+</code></pre>
+
+<p>which you can confirm with:</p>
+
+<pre><code>&gt; git branch
+* R-Forge
+  master
+</code></pre>
+
+<p>At this point, the &ldquo;master&rdquo; and the &ldquo;R-Forge&rdquo; branch contain identical file sets.  If you would edit any of the files right now, those modifications would only affect the &ldquo;R-Forge&rdquo; branch, because that&#39;s the currently checked out branch.</p>
+
+<p>TIPS: You can create and checkout the R-Forge branch in one go via <code>git checkout -b R-Forge</code>.</p>
+
+<h2>Never edit files in the &ldquo;R-Forge&rdquo; branch</h2>
+
+<p>While it&#39;s possible, I recommend that you never edit files while in the &ldquo;R-Forge&rdquo; branch.  Instead do all your work in the &ldquo;master&rdquo; branch  Later we&#39;ll might refine this to always do work in a third &ldquo;devel&rdquo; branch.  Either way, you should never have to do edits in the &ldquo;R-Forge&rdquo; branch.  That exists only to reflect what&#39;s on R-Forge, and for committing to and updating from R-Forge.</p>
+
+<h2>Do some edits and committing those to R-Forge</h2>
+
+<p>Let&#39;s bump the version number of the package but editing the <code>DESCRIPTION</code> file.  However, first, remember to not modify the R-Forge branch, so let&#39;s switch to &ldquo;master&rdquo;:</p>
+
+<pre><code>&gt; git checkout master
+Switched to branch &#39;master&#39;
+</code></pre>
+
+<p>and verify:</p>
+
+<pre><code>&gt; git branch
+* R-Forge
+  master
+</code></pre>
+
+<h3>Edit files and ask Git what&#39;s changed</h3>
+
+<p>Now, bump the version in <code>DESCRIPTION</code> and save.  After doing this, we can ask Git for what has changed (relative to what&#39;s in the Git repository):</p>
+
+<pre><code>&gt; git diff
+diff --git a/DESCRIPTION b/DESCRIPTION
+index df2846d..088c05a 100644
+--- a/DESCRIPTION
++++ b/DESCRIPTION
+@@ -1,6 +1,6 @@
+ Package: R.synchronize
+-Version: 0.0.3
+-Date: 2009-05-30
++Version: 0.0.4
++Date: 2014-05-04
+ Title: Synchronious locking mechanisms
+ Author: Henrik Bengtsson &lt;henrikb@braju.com&gt;
+ Maintainer: Henrik Bengtsson &lt;henrikb@braju.com&gt;
+</code></pre>
+
+<p>We can also get a brief summary of what changed:</p>
+
+<pre><code>&gt; git diff --stat
+ DESCRIPTION | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+</code></pre>
+
+<p>Note, it&#39;s safe to try to switch to another branch.  Files will be preserved even if they are not committed, and if there is a situation when it is not safe to switch, Git will prevent you from doing it and explain why.</p>
+
+<h3>Commit changes to R-Forge</h3>
+
+<p>After having tested our package in the &ldquo;master&rdquo; branch, for instance by running <code>R CMD check --as-cran</code>, we can commit our changes to R-Forge.  This will be done in three steps:</p>
+
+<ol>
+<li>Commit changes to Git (branch &ldquo;master&rdquo;)</li>
+<li>Merge changes in &ldquo;master&rdquo; into the &ldquo;R-Forge&rdquo; branch.</li>
+<li>Commit to the R-Forge server.</li>
+</ol>
+
+<p>First, we need to commit the above modications of the &ldquo;master&rdquo; branch, because currently those are only available as &ldquo;tracked but not committed&rdquo; files.  This is done by:</p>
+
+<pre><code>&gt; git commit -a -m &quot;Bumped the version&quot;
+[master 7a7f3ce] Bumped the version
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+</code></pre>
+
+<p>The log will tell you that it went through:</p>
+
+<pre><code>&gt; git log -1
+commit 7a7f3ce61ac5a32a51c02790e3f0af9fbdbb97bc
+Author: hb &lt;hb@aroma-project.org&gt;
+Date:   Sun May 4 13:20:51 2014 -0700
+
+    Bumped the version
+</code></pre>
+
+<p>and so does <code>git diff</code> which will given an empty output.</p>
+
+<p>Second, let&#39;s bring those changes over to the &ldquo;R-Forge&rdquo; branch.  To do this we first have to switch over:</p>
+
+<pre><code>git checkout R-Forge
+Switched to branch &#39;R-Forge&#39;
+</code></pre>
+
+<p>If we forgot what has changed since last R-Forge commit, we can do:</p>
+
+<pre><code>&gt; git diff --stat R-Forge master
+ DESCRIPTION | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+</code></pre>
+
+<p>which will tell us that one file has been modified in the &ldquo;master&rdquo; branch that is still not in the &ldquo;R-Forge&rdquo; branch.</p>
+
+<p>Let&#39;s bring in those modifications by <em>merging</em> the &ldquo;master&rdquo; branch into the &ldquo;R-Forge&rdquo; branch.  This part may sound like voodoo, but these days merging of text-based files works almost flawlessly and pretty much emulates what you would have done manually.  Also, if there are potential conflicts, e.g. the exact same line has been modified in both branches (remember, you shouldn&#39;t edit the &ldquo;R-Forge&rdquo; branch anyway), Git will detect this, inform you and let you edit it manually.  Git is always your friend - not you enemy.  So, let&#39;s merge:</p>
+
+<pre><code>&gt; git merge &quot;master&quot;
+Updating 70ac435..7a7f3ce
+Fast-forward
+ DESCRIPTION | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+</code></pre>
+
+<p>That&#39;s it!  Now, let&#39;s check the log of this (&ldquo;R-Forge&rdquo;) branch:</p>
+
+<pre><code>&gt; git log -1
+commit 7a7f3ce61ac5a32a51c02790e3f0af9fbdbb97bc
+Author: hb &lt;hb@aroma-project.org&gt;
+Date:   Sun May 4 13:20:51 2014 -0700
+
+    Bumped the version
+</code></pre>
+
+<p>So, the commit we did in the &ldquo;master&rdquo; branch is now incorporated in the &ldquo;R-Forge&rdquo; branch.  Also, since we haven&#39;t modified the &ldquo;R-Forge&rdquo; branch, the &ldquo;R-Forge&rdquo; and the &ldquo;master&rdquo; branches our now identical, which you can verify by <code>git diff R-Forge master</code> giving an empty output.</p>
+
+<p>Oops, we almost forgot, let&#39;s rebase the &ldquo;R-Forge&rdquo; branch such that it points the the current state of the &ldquo;master&rdquo; branch:</p>
+
+<pre><code>&gt; git rebase master
+First, rewinding head to replay your work on top of it...
+</code></pre>
+
+<pre><code>&gt; git rebase master
+First, rewinding head to replay your work on top of it...
+Fast-forwarded R-Forge to master.
+</code></pre>
+
+<p>Note, all we have done this far have only affected out Git repository.  So, as a last step we have to commit the &ldquo;R-Forge&rdquo; branch to the R-Forge servers:</p>
+
+<pre><code>&gt; git svn --use-log-author dcommit
+Committing to svn+ssh://henrikb@svn.r-forge.r-project.org/svnroot/r-dots/pkg/R.synchronize ...
+        M       DESCRIPTION
+Committed r2140
+        M       DESCRIPTION
+r2140 = 90a69bf3ab12e51b1c034f4960554fe8193c25fb (refs/remotes/git-svn)
+No changes between 7a7f3ce61ac5a32a51c02790e3f0af9fbdbb97bc and refs/remotes/git-svn
+Resetting to the latest refs/remotes/git-svn
+</code></pre>
+
+<p>As before, we use <code>--use-log-author</code> just in case as explained later.</p>
+
+<p>We&#39;re done.  We can verify by asking R-Forge about the Subversion log:</p>
+
+<pre><code>&gt; git svn log -1
+------------------------------------------------------------------------
+r2140 |  | 2014-05-04 13:38:49 -0700 (Sun, 04 May 2014) | 2 lines
+
+Bumped the version
+
+------------------------------------------------------------------------
+</code></pre>
+
+<p>It is still the same as before.  This is because a commit to a Git repository ony happens locally.  The logic behind this is that all Git repository are local.  In order to &ldquo;push&rdquo; the commits (now in the Git repository) to R-Forge, do:</p>
+
+<pre><code>&gt; git svn --use-log-author dcommit
+Committing to svn+ssh://henrikb@svn.r-forge.r-project.org/svnroot/r-dots/pkg/R.synchronize ...
+        M       DESCRIPTION
+Committed r2139
+        M       DESCRIPTION
+r2139 = 70ac435dda41ff4be501ddb36ba524cb16376754 (refs/remotes/git-svn)
+No changes between 96a4f58cb22c7cb621df40c570d8055d11515c5a and refs/remotes/git-svn
+Resetting to the latest refs/remotes/git-svn
+</code></pre>
+
+<pre><code>&gt; git svn log -1
+------------------------------------------------------------------------
+r2139 | henrikb | 2014-05-03 22:54:26 -0700 (Sat, 03 May 2014) | 2 lines
+
+Bumped the version
+
+------------------------------------------------------------------------
+</code></pre>
+
+<h2>What about the author information?</h2>
+
+<p>If we compare the <code>git log</code> and the <code>git svn log</code> further, we notice that the timestamp and
+the username of the Subversion log do not match those of the Git log.</p>
+
+<blockquote>
+<p>&ldquo;&hellip; the subversion repository format is poorer than the git one. It doesn&#39;t support merging well, or committers vs authors or commit times distinct from push times. git-svn is OK to get the git ui locally, but it can&#39;t do much about the data model.&rdquo; [<a href="http://stackoverflow.com/questions/5327924/git-svn-dcommit-with-svn-usernames">http://stackoverflow.com/questions/5327924/git-svn-dcommit-with-svn-usernames</a>]</p>
+</blockquote>
+
+<pre><code>&gt; git config --global svn.authorsfile ~/.gitauthors
+&gt; git config --local --unset svn.authorsfile
+</code></pre>
+
+<pre><code>--use-log-author
+
+--authors-prog=&lt;filename&gt;
+If this option is specified, for each SVN committer name that does not exist in the authors file, the given file is executed with the committer name as the first argument. The program is expected to return a single line of the form &quot;Name &lt;email&gt;&quot;, which will be treated as if included in the authors file.
+</code></pre>
+
+<h2>Check if the Subversion repository has any modifications</h2>
+
+<pre><code>x:\_GITHUB\R-Forge exports\r-dots\foo\R.synchronize&gt;git svn info
+Path: .
+URL: svn+ssh://svn.r-forge.r-project.org/svnroot/r-dots/pkg/R.synchronize
+Repository Root: svn+ssh://svn.r-forge.r-project.org/svnroot/r-dots
+Repository UUID: edb9625f-4e0d-4859-8d74-9fd3b1da38cb
+Revision: 243
+Node Kind: directory
+Schedule: normal
+Last Changed Author: henrikb
+Last Changed Rev: 243
+Last Changed Date: 2009-06-05 11:37:04 -0700 (Fri, 05 Jun 2009)
+</code></pre>
+
+<h2>All existing commit authors</h2>
+
+<p>All existing authors who even committed to the Subversion repository:</p>
+
+<pre><code>&gt; git svn log | grep &quot;r[0-9]&quot; | cut -d&quot; &quot; -f3 | sort -u
+henrikb
+</code></pre>
+
+<p>Now create an <code>svn-git-authors.txt</code> file:</p>
+
+<pre><code>henrikb = Henrik Bengtsson &lt;henkebenke@aroma-project.org&gt;
+</code></pre>
+
+<h1>Appendix</h1>
+
+<h2>Don&#39;t use svn2git</h2>
+
+<p>Although it&#39;s neat, it&#39;s unnecessary, but what&#39;s worse is that it uses <code>--no-metadata</code> which will prevent you from having your Git repository to sync towards R-Forge.  See <code>git svn --help</code> for more details.</p>
+
+<h2>Tips for Windows users</h2>
+
+<h3>&ldquo;Terminal not fully functional&rdquo;</h3>
+
+<p>Do you see this?</p>
+
+<pre><code>&gt; git log
+WARNING: terminal is not fully functional
+...
+(END)
+</code></pre>
+
+<p>If so, then do:</p>
+
+<pre><code>set TERM=msys
+</code></pre>
+
+<p>and you&#39;ll get rid of the message and at the same time highlighted (color annotated) output from Git that is much easier to read.  To set it permanently, use <code>setx TERM msys /M</code></p>
+
+<h2>Validate Git repository</h2>
+
+<pre><code>git fsck --full --strict
+git gc
+</code></pre>
+
+<h2>Shortcuts</h2>
+
+<pre><code># Clone and add R-forge branch
+git rfcl r-dots R.cache  # clone R-forge package r-dots:R.cache
+
+# Update .Rbuildignore
+git ci &quot;Ignoring more files&quot;
+
+# Add .travis.yml
+git add .travis.yml
+git ci &quot;TRAVIS: Setup&quot;
+
+# Add R package version tags
+git log
+git tag v0.9.0 e87d3c7ee66bd79f8a90e63eb7499eb5f84a42cb
+
+# Commit to R-Forge
+git cor
+git rebase master
+git rfci
+</code></pre>
+
+<h2>GitHub</h2>
+
+<pre><code>git remote add origin git@github.com:HenrikBengtsson/R.utils.git
+</code></pre>
+
+<blockquote>
+<p>git log</p>
+</blockquote>
+
+<p>WARNING: terminal is not fully functional
+commit 123a39e8c1fb324d7f40c3feee3629fa3e600ca5
+Author: henrikb <a href="mailto:henrikb@edb9625f-4e0d-4859-8d74-9fd3b1da38cb">henrikb@edb9625f-4e0d-4859-8d74-9fd3b1da38cb</a>
+Date:   Fri Jun 5 18:37:04 2009 +0000</p>
+
+<pre><code>Further rearrangements for passing R CMD check without prefiltering files.
+
+git-svn-id: svn+ssh://svn.r-forge.r-project.org/svnroot/r-dots/pkg/R.synchro
+</code></pre>
+
+<p>commit 2f8f4021436d10a2808b80c18b0d0b97d767b118
+Author: henrikb <a href="mailto:henrikb@edb9625f-4e0d-4859-8d74-9fd3b1da38cb">henrikb@edb9625f-4e0d-4859-8d74-9fd3b1da38cb</a>
+Date:   Fri Jun 5 00:59:03 2009 +0000</p>
+
+<pre><code>Added R.synchronize.
+
+git-svn-id: svn+ssh://svn.r-forge.r-project.org/svnroot/r-dots/pkg/R.synchro
+</code></pre>
+
+<p>(END)</p>
+
+<blockquote>
+<p>git svn info</p>
+</blockquote>
+
+<p>Path: .
+URL: svn+ssh://svn.r-forge.r-project.org/svnroot/r-dots/pkg/R.synchronize
+Repository Root: svn+ssh://svn.r-forge.r-project.org/svnroot/r-dots
+Repository UUID: edb9625f-4e0d-4859-8d74-9fd3b1da38cb
+Revision: 243
+Node Kind: directory
+Schedule: normal
+Last Changed Author: henrikb
+Last Changed Rev: 243
+Last Changed Date: 2009-06-05 11:37:04 -0700 (Fri, 05 Jun 2009)</p>
+
+<blockquote>
+<p>git config &ndash;local &ndash;list</p>
+</blockquote>
+
+<p>core.repositoryformatversion=0
+core.filemode=false
+core.bare=false
+core.logallrefupdates=true
+core.symlinks=false
+core.ignorecase=true
+core.hidedotfiles=dotGitOnly
+svn-remote.svn.url=svn+ssh://<a href="mailto:henrikb@svn.r-forge.r-project.org">henrikb@svn.r-forge.r-project.org</a>/svnroot/r-dots/pkg/R.synchronize
+svn-remote.svn.fetch=:refs/remotes/git-svn</p>
+
+<pre><code>git config --local svn-remote.svn.url svn+ssh://henrikb@svn.r-forge.r-project.org/svnroot/r-dots/pkg/R.methodsS3
+git config --local svn-remote.svn.fetch :refs/remotes/git-svn
+</code></pre>
+
+<blockquote>
+<p>git svn dcommit</p>
+</blockquote>
+
+<p>Committing to svn+ssh://<a href="mailto:henrikb@svn.r-forge.r-project.org">henrikb@svn.r-forge.r-project.org</a>/svnroot/r-dots/pkg/R.synchronize &hellip;</p>
+
+</body>
+
+</html>

@@ -1,0 +1,121 @@
+<%@import file="../../blogs/incl/references.md.rsp"%>
+<%@meta title="How to: Git SVN for R-Forge"%>
+<%@meta author="Henrik Bengtsson"%>
+<%@meta date="2014-05-03"%>
+
+# <%@meta name="title"%>
+
+This document explains how to (bi-directionally) access your [R-Forge] repository using [Git] instead of [Subversion].
+
+Quick summary:
+1. `svn checkout` => `git svn clone <url>`
+2. `svn update`   => `git svn rebase`
+3. `svn commit`   => `git svn dcommit`
+
+
+
+> git svn clone svn+ssh://henrikb@svn.r-forge.r-project.org/svnroot/r-dots/pkg/R.synchronize .
+
+Initialized empty Git repository in x:/_GITHUB/R-Forge exports/r-dots/foo/R.methodsS3/R.menu/.git/
+W: Ignoring error from SVN, path probably does not exist: (160013): Filesystem has no item: File not found: revision 100, path '/pkg/R.synchronize'
+W: Do not be alarmed at the above message git-svn is just searching aggressively for old history.
+This may take a while on large repositories
+Checked Ahrough R/000.R
+        A       R/006.fixVarArgs.R
+        A       R/SocketMutexServer.R
+        A       R/NullFileLock.R
+        A       R/999.package.R
+        A       R/999.NonDocumentedObjects.R
+        A       R/AbstractMutex.R
+        A       R/FileLock.R
+        A       R/999.missingdocs.txt
+        A       R/SocketMutex.R
+        A       R/NullMutex.R
+        A       R/zzz.R
+        A       DESCRIPTION
+        A       incl/BengtssonH_2003.bib.Rdoc
+        A       incl/SocketMutexServer.Rex
+        A       incl/FileLock.Rex
+        A       incl/SocketMutex.Rex
+        A       man/SocketMutex.Rd
+        A       man/NullMutex.Rd
+        A       man/R.synchronize-package.Rd
+        A       man/AbstractMutex.Rd
+        A       man/FileLock.Rd
+        A       man/Non-documented_objects.Rd
+        A       inst/testScripts/system/locks/test20090526-lock.Rex
+        A       inst/NEWS
+r238 = 2f8f4021436d10a2808b80c18b0d0b97d767b118 (refs/remotes/git-svn)
+        D       R/999.missingdocs.txt
+        M       R/999.NonDocumentedObjects.R
+        A       incl/999.missingdocs.txt
+W: -empty_dir: R/999.missingdocs.txt
+r243 = 123a39e8c1fb324d7f40c3feee3629fa3e600ca5 (refs/remotes/git-svn)
+Checked out HEAD:
+  svn+ssh://henrikb@svn.r-forge.r-project.org/svnroot/r-dots/pkg/R.synchronize r243
+
+
+
+> git log
+
+WARNING: terminal is not fully functional
+commit 123a39e8c1fb324d7f40c3feee3629fa3e600ca5
+Author: henrikb <henrikb@edb9625f-4e0d-4859-8d74-9fd3b1da38cb>
+Date:   Fri Jun 5 18:37:04 2009 +0000
+
+    Further rearrangements for passing R CMD check without prefiltering files.
+
+    git-svn-id: svn+ssh://svn.r-forge.r-project.org/svnroot/r-dots/pkg/R.synchro
+
+commit 2f8f4021436d10a2808b80c18b0d0b97d767b118
+Author: henrikb <henrikb@edb9625f-4e0d-4859-8d74-9fd3b1da38cb>
+Date:   Fri Jun 5 00:59:03 2009 +0000
+
+    Added R.synchronize.
+
+    git-svn-id: svn+ssh://svn.r-forge.r-project.org/svnroot/r-dots/pkg/R.synchro
+(END)
+
+
+
+> git svn info
+
+Path: .
+URL: svn+ssh://svn.r-forge.r-project.org/svnroot/r-dots/pkg/R.synchronize
+Repository Root: svn+ssh://svn.r-forge.r-project.org/svnroot/r-dots
+Repository UUID: edb9625f-4e0d-4859-8d74-9fd3b1da38cb
+Revision: 243
+Node Kind: directory
+Schedule: normal
+Last Changed Author: henrikb
+Last Changed Rev: 243
+Last Changed Date: 2009-06-05 11:37:04 -0700 (Fri, 05 Jun 2009)
+
+
+
+> git config --local --list
+
+core.repositoryformatversion=0
+core.filemode=false
+core.bare=false
+core.logallrefupdates=true
+core.symlinks=false
+core.ignorecase=true
+core.hidedotfiles=dotGitOnly
+svn-remote.svn.url=svn+ssh://henrikb@svn.r-forge.r-project.org/svnroot/r-dots/pkg/R.synchronize
+svn-remote.svn.fetch=:refs/remotes/git-svn
+
+
+> git svn dcommit
+
+Committing to svn+ssh://henrikb@svn.r-forge.r-project.org/svnroot/r-dots/pkg/R.synchronize ...
+
+
+
+
+
+<%---------------------------------------------------------------------------
+HISTORY:
+2014-05-03
+o Created.
+---------------------------------------------------------------------------%>
