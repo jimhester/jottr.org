@@ -199,7 +199,8 @@ index df2846d..088c05a 100644
  Title: Synchronious locking mechanisms
  Author: Henrik Bengtsson <henrikb@braju.com>
  Maintainer: Henrik Bengtsson <henrikb@braju.com>
- ```
+```
+
 We can also get a brief summary of what changed:
 ```
 > git diff --stat
@@ -393,13 +394,16 @@ set TERM=msys
 ```
 and you'll get rid of the message and at the same time highlighted (color annotated) output from Git that is much easier to read.  To set it permanently, use `setx TERM msys /M`
 
+
 ## Validate Git repository
+
 ```
 git fsck --full --strict
 git gc
 ```
 
 ## Shortcuts
+
 ```
 # Clone and add R-forge branch
 git rfcl r-dots R.cache  # clone R-forge package r-dots:R.cache
@@ -421,7 +425,9 @@ git rebase master
 git rfci
 ```
 
+
 ## GitHub
+
 ```
 git remote add origin git@github.com:HenrikBengtsson/R.utils.git
 ```
