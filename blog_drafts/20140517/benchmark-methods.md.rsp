@@ -1,0 +1,82 @@
+<%@meta title="Benchmarking: Startup cost of the 'methods' package"%>
+<%@meta author="Henrik Bengtsson"%>
+<%@meta date="2014-05-17"%>
+<%
+R.utils::use("R.utils (>= 1.32.5)")
+use("microbenchmark")
+options("withCapture/newline"=FALSE)
+options(deparse.cutoff=110)
+binR <- file.path(R.home("bin"), "R")
+bin <- file.path(R.home("bin"), "Rscript")
+B <- 10L # Number of benchmark replicates
+%>
+
+# <%@meta name="title"%>
+<%@meta name="author"%> on <%@meta name="date"%>
+
+You might have noticed that `R` attaches the 'methods' package by default whereas `Rscript` does not.  Compare
+```
+% R --silent -e "search()"
+<% cat(system2(binR, args=c("--silent", "-e", shQuote("search()")), stdout=TRUE), sep="\n") %>
+```
+with
+```
+% Rscript -e "search()"
+<% cat(system2(bin, args=c("-e", shQuote("search()")), stdout=TRUE), sep="\n") %>
+```
+
+The reason for this is that there is a substantial overhead in loading the 'methods' package.  From `help("Rscript")` we can read
+
+> The default for Rscript omits methods as it takes about 60% of the startup time.
+
+
+Here is how you can measure this yourself.  Let's start by defining function `Rscript()` for calling `Rscript` from within R.  It takes the expression to be avaulated as argument `expr` and the packages to be attached when loaded as argument `pkgs`.
+```r
+<%=withCapture({
+Rscript <- function(expr, pkgs=NULL) {
+  args <- c("-e", shQuote(paste(expr, collapse="\n")));
+  args <- c("--vanilla", args);
+  if (length(pkgs) > 0)
+    args <- c(sprintf("--default-packages=%s", paste(pkgs, collapse=",")), args)
+  system2(file.path(R.home("bin"), "Rscript"), args=args, stdout=TRUE)
+} # Rscript()
+})%>
+```
+
+With this function we can now run Rscript with an R expression as:
+```r
+<%=withCapture({
+Rscript("cat('Hello world!\n')", pkgs="base")
+})%>
+```
+which will run `Rscript` with only the 'base' package loaded.
+
+
+Finally, let's benchmark `Rscript` with and without the 'methods' package being attached:
+```r
+<%=withCapture({
+library("microbenchmark")
+
+without_methods <- function() Rscript("cat('Hello world!\n')", pkgs="base")
+with_methods <- function() Rscript("cat('Hello world!\n')", pkgs=c("base", "methods"))
+
+stats <- microbenchmark(with_methods(), without_methods(), times=.B.)
+stats
+})%>
+```
+<%
+mu <- by(stats$time, INDICES=stats$expr, FUN=median)
+rho <- mu[1]/mu[2]
+%>
+This shows that attaching 'methods' increases the startup time by <%=round(100*(rho-1), digits=0)%>%.
+
+Although the increase is only a fraction of a second in absolute terms, it adds an unnecessary overhead if the 'methods' package is not needed.  This may be noticable if the script itself is short and designed to return as quick as possible.
+
+
+<%@include file="../../incl/references.md.rsp"%>
+
+<%---------------------------------------------------------------------------
+HISTORY:
+2014-05-03
+o Created.
+---------------------------------------------------------------------------%>

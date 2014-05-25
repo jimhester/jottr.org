@@ -1,0 +1,58 @@
+<%@meta title="Benchmarking: Subsetted operations in matrixStats"%>
+<%@meta author="Henrik Bengtsson"%>
+<%@meta date="2014-05-17"%>
+<%
+R.utils::use("R.utils (>= 1.32.5)")
+use("R.devices")
+options("devEval/args/field"="pathname")
+use("microbenchmark")
+use("knitr")
+use("ggplot2")
+kable <- function(...) knitr::kable(..., format="markdown")
+options("withCapture/newline"=FALSE)
+options(deparse.cutoff=110)
+binR <- file.path(R.home("bin"), "R")
+bin <- file.path(R.home("bin"), "Rscript")
+B <- 1000L # Number of benchmark replicates
+%>
+
+# <%@meta name="title"%>
+<%@meta name="author"%> on <%@meta name="date"%>
+
+## Background
+```r
+<%=withCapture({
+library("microbenchmark")
+
+set.seed(42)
+x <- matrix(rnorm(100e3), ncol=1000)
+rows <- 20+1:50
+xS <- x[rows,,drop=FALSE]
+gc()
+
+stats <- microbenchmark(
+ A = rowSums(x[rows,,drop=FALSE]),
+ B = rowSums(xS),
+times=.B.)
+})%>
+```
+
+<% kable(summary(stats)) %>
+
+![](<%=toPNG("matrixStats", tags=c("subsetting", "benchmark"), aspectRatio=2/3, {
+  gg <- qplot(y=time, data=stats, colour=expr)
+  gg <- gg + scale_y_log10()
+  print(gg)
+})%>)
+
+
+## Subsetted operators in matrixStats
+
+
+<%@include file="../../incl/references.md.rsp"%>
+
+<%---------------------------------------------------------------------------
+HISTORY:
+2014-05-18
+o Created.
+---------------------------------------------------------------------------%>
