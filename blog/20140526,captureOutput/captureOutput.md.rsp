@@ -1,0 +1,197 @@
+<%@meta title="PERFORMANCE: captureOutput() is much faster than capture.output()"%>
+<%@meta author="Henrik Bengtsson"%>
+<%@meta keywords="R, performance, speed"%>
+<%@meta date="2014-05-26"%>
+
+<%
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# RSP specific
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+R.utils::use("R.utils")
+
+# Output
+options("withCapture/newline"=FALSE)
+options(deparse.cutoff=110)
+
+# Links
+%>
+<% cran <- function(pkg) { %>[<%=pkg%>](http://cran.r-project.org/package=<%=pkg%>)<% } %>
+<%
+# Graphics
+use("R.devices")
+devOptions("png", width=640)
+options("devEval/args/field"="pathname")
+use("ggplot2")
+%>
+<% figure <- function(name, ..., envir=parent.frame()) { %>
+![<%=name%>](<%=toPNG(name, ..., envir=envir)%>)
+<% } # figure() %>
+<%
+# Tables
+use("knitr")
+kable <- function(...) knitr::kable(..., format="markdown")
+
+# Memoization
+use("R.cache")
+checksum <- R.cache::getChecksum
+memoize <- function(fcn) {
+  dirs <- c("captureOutput_vs_capture.output")
+  fcnOrg <- fcn
+  function(...) {
+    key <- list(...)
+    if (!is.null(res <- R.cache::loadCache(key=key, dirs=dirs))) return(res)
+    res <- fcnOrg(...)
+    R.cache::saveCache(res, key=key, dirs=dirs)
+    res
+  }
+} # memoize()
+%>
+
+
+# <%@meta name="title"%>
+by <%@meta name="author"%> on <%@meta name="date"%>
+(keywords: <%@meta name="keywords"%>)
+
+The R function capture.output() can be used to "collect" the output of functions such as cat() and print() to strings.  For example,
+```r
+<%=withCapture({
+s <- capture.output({
+  cat("Hello\nworld!\n")
+  print(pi)
+})
+s
+})%>
+```
+More precisely, it captures all output sent to the [standard output](http://www.wikipedia.org/wiki/Standard_streams) and returns a character vector where each element correspond to a line of output.  By the way, it does not capture the output sent to the standard error, e.g. `cat("Hello\nworld!\n", file=stderr())` and `message("Hello\nworld!\n")`.
+
+However, as currently implemented (R 3.1.0), this function is [very slow](https://stat.ethz.ch/pipermail/r-devel/2014-February/068349.html) in capturing a large number of lines. Its processing time is approximately _exponential_ in the number of lines capture, e.g. on my notebook 10,000 lines take 0.7 seconds to capture, whereas 50,000 take 12 seconds, and 100,000 take 42 seconds.  The culprit is textConnection() which capture.output() utilizes.  Without going in to the [details](https://github.com/wch/r-source/blob/R-3-1-branch/src/main/connections.c#L2920-2960), it turns out that textConnection() copies lines one by one internally, which is extremely inefficient.
+
+**The captureOutput() function of <%cran("R.utils")%> does not have this problem.**  Its processing time is _linear_ in the number of lines and characters, because it relies on rawConnection() instead of textConnection().  For instance, 100,000 lines take 0.2 seconds and 1,000,000 lines take 2.5 seconds to captures when the lines are 100 characters long.  For 100,000 lines with 1000 characters it takes 2.4 seconds.
+
+## Benchmarking
+The above benchmark results were obtained as following.  We first create a function that generates a string with a large number of lines:
+```r
+<%=withCapture({
+lineBuffer <- function(n, len) {
+  # A single "line"
+  line <- paste(c(rep(letters, length.out=len), "\n"), collapse="")
+  line <- charToRaw(line)
+  # Multiple ones
+  lines <- rep(line, times=n)
+  # As one long string
+  rawToChar(lines, multiple=FALSE)
+} # lineBuffer()
+})%>
+```
+For example,
+```r
+<%=withCapture({
+cat(lineBuffer(n=2, len=10))
+})%>
+```
+For very long character vectors paste() becomes very slow, which is why rawToChar() is used above.
+
+Next, lets create a function that measures the processing time for a capture function to capture the output of a given number of lines:
+```r
+<%=withCapture({
+benchmark <- function(fcn, n, len) {
+  x <- lineBuffer(n, len)
+  system.time({
+    fcn(cat(x))
+  }, gcFirst=TRUE)[[3]]
+} # benchmark()
+})%>
+```
+Note that the measured processing time neither includes the creation of the line buffer string nor the garbage collection.
+
+<%
+# Cached version of the above
+benchmark <- memoize(benchmark)
+%>
+
+The functions to be benchmarked are:
+```r
+<%=withCapture({
+fcns <- list(
+  capture.output = capture.output,
+  captureOutput  = captureOutput
+)
+})%>
+```
+and we choose to benchmark for outputs with a variety number of lines:
+```r
+<%=withCapture({
+ns <- c(1, 10, 100, 1e3, 10e3, 25e3, 50e3, 75e3, 100e3)
+})%>
+```
+
+<%
+# Memoize (speeds up rerunning of report)
+#fcns <- lapply(fcns, FUN=memoize)
+%>
+
+Finally, lets benchmark all of the above with lines of length 100 and 1000 characters:
+```r
+<%=withCapture({
+benchmarkAll <- function(ns, len) {
+  stats <- lapply(ns, FUN=function(n) {
+    message(sprintf("n=%d", n)) # Progress
+    t <- sapply(fcns, FUN=benchmark, n=n, len=len)
+    data.frame(name=names(t), n=n, time=unname(t))
+  })
+  Reduce(rbind, stats)
+}
+stats_100  <- benchmarkAll(ns, len=100L)
+stats_1000 <- benchmarkAll(ns, len=1000L)
+})%>
+```
+
+The results are:
+<%
+use("plyr")
+dataA <- ddply(stats_100, .(n), function(x) x$time)
+colnames(dataA)[-1] <- sprintf("%s(100)", names(fcns))
+dataB <- ddply(stats_1000, .(n), function(x) x$time)
+colnames(dataB)[-1] <- sprintf("%s(1000)", names(fcns))
+%>
+<% kable(join(dataA, dataB, by="n")) %>
+_Table: Benchmarking of captureOutput() and capture.output() for n lines of length 100 and 1000 characters. All times are in seconds._
+
+<% figure("captureOutput_vs_capture.output", tags=c(checksum(ns), "len=100"), aspectRatio=2/3, {
+  data <- rbind(
+    cbind(stats_100,  len="100"),
+	cbind(stats_1000, len="1000")
+  )
+  p <- ggplot(data, aes(x=n, y=time, group=interaction(name, len)))
+  p <- p + geom_line(aes(colour=name, linetype=len), size=1.5)
+  p <- p + xlab("Number of lines") + ylab("Time (s)")
+  p <- p + theme(legend.position="right")
+  p <- p + scale_colour_discrete(name="Capture function")
+  p <- p + scale_linetype_discrete(name="Length of lines")
+  print(p)
+}) %>
+
+_Figure: captureOutput() captures standard output much faster than capture.output().  The processing time for the latter grows exponentially in the number of lines captured whereas for the former it only grows linearly._
+
+These results will vary a little bit from run to run, particularly since we only benchmark once per setting.  This also explains why for some settings the processing time for lines with 1000 characters appears faster than the corresponding setting with 100 characters.  Averaging over multiple runs would remove this artifact.
+
+
+## Appendix
+
+### Session information
+```r
+<% print(sessionInfo()) %>
+```
+Tables were generated using <%cran("plyr")%> and <%cran("knitr")%>,
+and graphics using <%cran("ggplot2")%>.
+
+### Reproducibility
+<%@string gistuser="HenrikBengtsson"%>
+<%@string gistid="854d13a11a33b3d43ec3"%>
+<%@string gistfile="captureOutput.md.rsp"%>
+<%@meta source="https://gist.github.com/${gistuser}/${gistid}/raw/${gistfile}"%>
+
+This report was generated from an RSP-embedded Markdown [document](<%@meta name="source"%>) using <%cran("R.rsp")%> v<%=packageVersion("R.rsp")%>.
+<!--
+It can be recompiled as `R.rsp::rfile("<%@meta name="source"%>")`.
+-->

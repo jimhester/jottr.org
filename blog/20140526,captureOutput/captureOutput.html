@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+<title>PERFORMANCE: captureOutput() is much faster than capture.output()</title>
+
+<!-- Styles for R syntax highlighter -->
+<style type="text/css">
+   pre .operator,
+   pre .paren {
+     color: rgb(104, 118, 135)
+   }
+
+   pre .literal {
+     color: #990073
+   }
+
+   pre .number {
+     color: #099;
+   }
+
+   pre .comment {
+     color: #998;
+     font-style: italic
+   }
+
+   pre .keyword {
+     color: #900;
+     font-weight: bold
+   }
+
+   pre .identifier {
+     color: rgb(0, 0, 0);
+   }
+
+   pre .string {
+     color: #d14;
+   }
+</style>
+
+<!-- R syntax highlighter -->
+<script type="text/javascript">
+var hljs=new function(){function m(p){return p.replace(/&/gm,"&amp;").replace(/</gm,"&lt;")}function f(r,q,p){return RegExp(q,"m"+(r.cI?"i":"")+(p?"g":""))}function b(r){for(var p=0;p<r.childNodes.length;p++){var q=r.childNodes[p];if(q.nodeName=="CODE"){return q}if(!(q.nodeType==3&&q.nodeValue.match(/\s+/))){break}}}function h(t,s){var p="";for(var r=0;r<t.childNodes.length;r++){if(t.childNodes[r].nodeType==3){var q=t.childNodes[r].nodeValue;if(s){q=q.replace(/\n/g,"")}p+=q}else{if(t.childNodes[r].nodeName=="BR"){p+="\n"}else{p+=h(t.childNodes[r])}}}if(/MSIE [678]/.test(navigator.userAgent)){p=p.replace(/\r/g,"\n")}return p}function a(s){var r=s.className.split(/\s+/);r=r.concat(s.parentNode.className.split(/\s+/));for(var q=0;q<r.length;q++){var p=r[q].replace(/^language-/,"");if(e[p]){return p}}}function c(q){var p=[];(function(s,t){for(var r=0;r<s.childNodes.length;r++){if(s.childNodes[r].nodeType==3){t+=s.childNodes[r].nodeValue.length}else{if(s.childNodes[r].nodeName=="BR"){t+=1}else{if(s.childNodes[r].nodeType==1){p.push({event:"start",offset:t,node:s.childNodes[r]});t=arguments.callee(s.childNodes[r],t);p.push({event:"stop",offset:t,node:s.childNodes[r]})}}}}return t})(q,0);return p}function k(y,w,x){var q=0;var z="";var s=[];function u(){if(y.length&&w.length){if(y[0].offset!=w[0].offset){return(y[0].offset<w[0].offset)?y:w}else{return w[0].event=="start"?y:w}}else{return y.length?y:w}}function t(D){var A="<"+D.nodeName.toLowerCase();for(var B=0;B<D.attributes.length;B++){var C=D.attributes[B];A+=" "+C.nodeName.toLowerCase();if(C.value!==undefined&&C.value!==false&&C.value!==null){A+='="'+m(C.value)+'"'}}return A+">"}while(y.length||w.length){var v=u().splice(0,1)[0];z+=m(x.substr(q,v.offset-q));q=v.offset;if(v.event=="start"){z+=t(v.node);s.push(v.node)}else{if(v.event=="stop"){var p,r=s.length;do{r--;p=s[r];z+=("</"+p.nodeName.toLowerCase()+">")}while(p!=v.node);s.splice(r,1);while(r<s.length){z+=t(s[r]);r++}}}}return z+m(x.substr(q))}function j(){function q(x,y,v){if(x.compiled){return}var u;var s=[];if(x.k){x.lR=f(y,x.l||hljs.IR,true);for(var w in x.k){if(!x.k.hasOwnProperty(w)){continue}if(x.k[w] instanceof Object){u=x.k[w]}else{u=x.k;w="keyword"}for(var r in u){if(!u.hasOwnProperty(r)){continue}x.k[r]=[w,u[r]];s.push(r)}}}if(!v){if(x.bWK){x.b="\\b("+s.join("|")+")\\s"}x.bR=f(y,x.b?x.b:"\\B|\\b");if(!x.e&&!x.eW){x.e="\\B|\\b"}if(x.e){x.eR=f(y,x.e)}}if(x.i){x.iR=f(y,x.i)}if(x.r===undefined){x.r=1}if(!x.c){x.c=[]}x.compiled=true;for(var t=0;t<x.c.length;t++){if(x.c[t]=="self"){x.c[t]=x}q(x.c[t],y,false)}if(x.starts){q(x.starts,y,false)}}for(var p in e){if(!e.hasOwnProperty(p)){continue}q(e[p].dM,e[p],true)}}function d(B,C){if(!j.called){j();j.called=true}function q(r,M){for(var L=0;L<M.c.length;L++){if((M.c[L].bR.exec(r)||[null])[0]==r){return M.c[L]}}}function v(L,r){if(D[L].e&&D[L].eR.test(r)){return 1}if(D[L].eW){var M=v(L-1,r);return M?M+1:0}return 0}function w(r,L){return L.i&&L.iR.test(r)}function K(N,O){var M=[];for(var L=0;L<N.c.length;L++){M.push(N.c[L].b)}var r=D.length-1;do{if(D[r].e){M.push(D[r].e)}r--}while(D[r+1].eW);if(N.i){M.push(N.i)}return f(O,M.join("|"),true)}function p(M,L){var N=D[D.length-1];if(!N.t){N.t=K(N,E)}N.t.lastIndex=L;var r=N.t.exec(M);return r?[M.substr(L,r.index-L),r[0],false]:[M.substr(L),"",true]}function z(N,r){var L=E.cI?r[0].toLowerCase():r[0];var M=N.k[L];if(M&&M instanceof Array){return M}return false}function F(L,P){L=m(L);if(!P.k){return L}var r="";var O=0;P.lR.lastIndex=0;var M=P.lR.exec(L);while(M){r+=L.substr(O,M.index-O);var N=z(P,M);if(N){x+=N[1];r+='<span class="'+N[0]+'">'+M[0]+"</span>"}else{r+=M[0]}O=P.lR.lastIndex;M=P.lR.exec(L)}return r+L.substr(O,L.length-O)}function J(L,M){if(M.sL&&e[M.sL]){var r=d(M.sL,L);x+=r.keyword_count;return r.value}else{return F(L,M)}}function I(M,r){var L=M.cN?'<span class="'+M.cN+'">':"";if(M.rB){y+=L;M.buffer=""}else{if(M.eB){y+=m(r)+L;M.buffer=""}else{y+=L;M.buffer=r}}D.push(M);A+=M.r}function G(N,M,Q){var R=D[D.length-1];if(Q){y+=J(R.buffer+N,R);return false}var P=q(M,R);if(P){y+=J(R.buffer+N,R);I(P,M);return P.rB}var L=v(D.length-1,M);if(L){var O=R.cN?"</span>":"";if(R.rE){y+=J(R.buffer+N,R)+O}else{if(R.eE){y+=J(R.buffer+N,R)+O+m(M)}else{y+=J(R.buffer+N+M,R)+O}}while(L>1){O=D[D.length-2].cN?"</span>":"";y+=O;L--;D.length--}var r=D[D.length-1];D.length--;D[D.length-1].buffer="";if(r.starts){I(r.starts,"")}return R.rE}if(w(M,R)){throw"Illegal"}}var E=e[B];var D=[E.dM];var A=0;var x=0;var y="";try{var s,u=0;E.dM.buffer="";do{s=p(C,u);var t=G(s[0],s[1],s[2]);u+=s[0].length;if(!t){u+=s[1].length}}while(!s[2]);if(D.length>1){throw"Illegal"}return{r:A,keyword_count:x,value:y}}catch(H){if(H=="Illegal"){return{r:0,keyword_count:0,value:m(C)}}else{throw H}}}function g(t){var p={keyword_count:0,r:0,value:m(t)};var r=p;for(var q in e){if(!e.hasOwnProperty(q)){continue}var s=d(q,t);s.language=q;if(s.keyword_count+s.r>r.keyword_count+r.r){r=s}if(s.keyword_count+s.r>p.keyword_count+p.r){r=p;p=s}}if(r.language){p.second_best=r}return p}function i(r,q,p){if(q){r=r.replace(/^((<[^>]+>|\t)+)/gm,function(t,w,v,u){return w.replace(/\t/g,q)})}if(p){r=r.replace(/\n/g,"<br>")}return r}function n(t,w,r){var x=h(t,r);var v=a(t);var y,s;if(v){y=d(v,x)}else{return}var q=c(t);if(q.length){s=document.createElement("pre");s.innerHTML=y.value;y.value=k(q,c(s),x)}y.value=i(y.value,w,r);var u=t.className;if(!u.match("(\\s|^)(language-)?"+v+"(\\s|$)")){u=u?(u+" "+v):v}if(/MSIE [678]/.test(navigator.userAgent)&&t.tagName=="CODE"&&t.parentNode.tagName=="PRE"){s=t.parentNode;var p=document.createElement("div");p.innerHTML="<pre><code>"+y.value+"</code></pre>";t=p.firstChild.firstChild;p.firstChild.cN=s.cN;s.parentNode.replaceChild(p.firstChild,s)}else{t.innerHTML=y.value}t.className=u;t.result={language:v,kw:y.keyword_count,re:y.r};if(y.second_best){t.second_best={language:y.second_best.language,kw:y.second_best.keyword_count,re:y.second_best.r}}}function o(){if(o.called){return}o.called=true;var r=document.getElementsByTagName("pre");for(var p=0;p<r.length;p++){var q=b(r[p]);if(q){n(q,hljs.tabReplace)}}}function l(){if(window.addEventListener){window.addEventListener("DOMContentLoaded",o,false);window.addEventListener("load",o,false)}else{if(window.attachEvent){window.attachEvent("onload",o)}else{window.onload=o}}}var e={};this.LANGUAGES=e;this.highlight=d;this.highlightAuto=g;this.fixMarkup=i;this.highlightBlock=n;this.initHighlighting=o;this.initHighlightingOnLoad=l;this.IR="[a-zA-Z][a-zA-Z0-9_]*";this.UIR="[a-zA-Z_][a-zA-Z0-9_]*";this.NR="\\b\\d+(\\.\\d+)?";this.CNR="\\b(0[xX][a-fA-F0-9]+|(\\d+(\\.\\d*)?|\\.\\d+)([eE][-+]?\\d+)?)";this.BNR="\\b(0b[01]+)";this.RSR="!|!=|!==|%|%=|&|&&|&=|\\*|\\*=|\\+|\\+=|,|\\.|-|-=|/|/=|:|;|<|<<|<<=|<=|=|==|===|>|>=|>>|>>=|>>>|>>>=|\\?|\\[|\\{|\\(|\\^|\\^=|\\||\\|=|\\|\\||~";this.ER="(?![\\s\\S])";this.BE={b:"\\\\.",r:0};this.ASM={cN:"string",b:"'",e:"'",i:"\\n",c:[this.BE],r:0};this.QSM={cN:"string",b:'"',e:'"',i:"\\n",c:[this.BE],r:0};this.CLCM={cN:"comment",b:"//",e:"$"};this.CBLCLM={cN:"comment",b:"/\\*",e:"\\*/"};this.HCM={cN:"comment",b:"#",e:"$"};this.NM={cN:"number",b:this.NR,r:0};this.CNM={cN:"number",b:this.CNR,r:0};this.BNM={cN:"number",b:this.BNR,r:0};this.inherit=function(r,s){var p={};for(var q in r){p[q]=r[q]}if(s){for(var q in s){p[q]=s[q]}}return p}}();hljs.LANGUAGES.cpp=function(){var a={keyword:{"false":1,"int":1,"float":1,"while":1,"private":1,"char":1,"catch":1,"export":1,virtual:1,operator:2,sizeof:2,dynamic_cast:2,typedef:2,const_cast:2,"const":1,struct:1,"for":1,static_cast:2,union:1,namespace:1,unsigned:1,"long":1,"throw":1,"volatile":2,"static":1,"protected":1,bool:1,template:1,mutable:1,"if":1,"public":1,friend:2,"do":1,"return":1,"goto":1,auto:1,"void":2,"enum":1,"else":1,"break":1,"new":1,extern:1,using:1,"true":1,"class":1,asm:1,"case":1,typeid:1,"short":1,reinterpret_cast:2,"default":1,"double":1,register:1,explicit:1,signed:1,typename:1,"try":1,"this":1,"switch":1,"continue":1,wchar_t:1,inline:1,"delete":1,alignof:1,char16_t:1,char32_t:1,constexpr:1,decltype:1,noexcept:1,nullptr:1,static_assert:1,thread_local:1,restrict:1,_Bool:1,complex:1},built_in:{std:1,string:1,cin:1,cout:1,cerr:1,clog:1,stringstream:1,istringstream:1,ostringstream:1,auto_ptr:1,deque:1,list:1,queue:1,stack:1,vector:1,map:1,set:1,bitset:1,multiset:1,multimap:1,unordered_set:1,unordered_map:1,unordered_multiset:1,unordered_multimap:1,array:1,shared_ptr:1}};return{dM:{k:a,i:"</",c:[hljs.CLCM,hljs.CBLCLM,hljs.QSM,{cN:"string",b:"'\\\\?.",e:"'",i:"."},{cN:"number",b:"\\b(\\d+(\\.\\d*)?|\\.\\d+)(u|U|l|L|ul|UL|f|F)"},hljs.CNM,{cN:"preprocessor",b:"#",e:"$"},{cN:"stl_container",b:"\\b(deque|list|queue|stack|vector|map|set|bitset|multiset|multimap|unordered_map|unordered_set|unordered_multiset|unordered_multimap|array)\\s*<",e:">",k:a,r:10,c:["self"]}]}}}();hljs.LANGUAGES.r={dM:{c:[hljs.HCM,{cN:"number",b:"\\b0[xX][0-9a-fA-F]+[Li]?\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\b\\d+(?:[eE][+\\-]?\\d*)?L\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\b\\d+\\.(?!\\d)(?:i\\b)?",e:hljs.IMMEDIATE_RE,r:1},{cN:"number",b:"\\b\\d+(?:\\.\\d*)?(?:[eE][+\\-]?\\d*)?i?\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\.\\d+(?:[eE][+\\-]?\\d*)?i?\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"keyword",b:"(?:tryCatch|library|setGeneric|setGroupGeneric)\\b",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\.\\.\\.",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\.\\.\\d+(?![\\w.])",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\b(?:function)",e:hljs.IMMEDIATE_RE,r:2},{cN:"keyword",b:"(?:if|in|break|next|repeat|else|for|return|switch|while|try|stop|warning|require|attach|detach|source|setMethod|setClass)\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"literal",b:"(?:NA|NA_integer_|NA_real_|NA_character_|NA_complex_)\\b",e:hljs.IMMEDIATE_RE,r:10},{cN:"literal",b:"(?:NULL|TRUE|FALSE|T|F|Inf|NaN)\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"identifier",b:"[a-zA-Z.][a-zA-Z0-9._]*\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"operator",b:"<\\-(?!\\s*\\d)",e:hljs.IMMEDIATE_RE,r:2},{cN:"operator",b:"\\->|<\\-",e:hljs.IMMEDIATE_RE,r:1},{cN:"operator",b:"%%|~",e:hljs.IMMEDIATE_RE},{cN:"operator",b:">=|<=|==|!=|\\|\\||&&|=|\\+|\\-|\\*|/|\\^|>|<|!|&|\\||\\$|:",e:hljs.IMMEDIATE_RE,r:0},{cN:"operator",b:"%",e:"%",i:"\\n",r:1},{cN:"identifier",b:"`",e:"`",r:0},{cN:"string",b:'"',e:'"',c:[hljs.BE],r:0},{cN:"string",b:"'",e:"'",c:[hljs.BE],r:0},{cN:"paren",b:"[[({\\])}]",e:hljs.IMMEDIATE_RE,r:0}]}};
+hljs.initHighlightingOnLoad();
+</script>
+
+<!-- MathJax scripts -->
+<script type="text/javascript" src="https://c328740.ssl.cf1.rackcdn.com/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+<style type="text/css">
+body, td {
+   font-family: sans-serif;
+   background-color: white;
+   font-size: 13px;
+}
+
+body {
+  max-width: 800px;
+  margin: auto;
+  padding: 1em;
+  line-height: 20px;
+}
+
+tt, code, pre {
+   font-family: 'DejaVu Sans Mono', 'Droid Sans Mono', 'Lucida Console', Consolas, Monaco, monospace;
+}
+
+h1 {
+   font-size:2.2em;
+}
+
+h2 {
+   font-size:1.8em;
+}
+
+h3 {
+   font-size:1.4em;
+}
+
+h4 {
+   font-size:1.0em;
+}
+
+h5 {
+   font-size:0.9em;
+}
+
+h6 {
+   font-size:0.8em;
+}
+
+a:visited {
+   color: rgb(50%, 0%, 50%);
+}
+
+pre, img {
+  max-width: 100%;
+}
+
+pre code {
+   display: block; padding: 0.5em;
+}
+
+code {
+  font-size: 92%;
+  border: 1px solid #ccc;
+}
+
+code[class] {
+  background-color: #F8F8F8;
+}
+
+table, td, th {
+  border: none;
+}
+
+blockquote {
+   color:#666666;
+   margin:0;
+   padding-left: 1em;
+   border-left: 0.5em #EEE solid;
+}
+
+hr {
+   height: 0px;
+   border-bottom: none;
+   border-top-width: thin;
+   border-top-style: dotted;
+   border-top-color: #999999;
+}
+
+@media print {
+   * {
+      background: transparent !important;
+      color: black !important;
+      filter:none !important;
+      -ms-filter: none !important;
+   }
+
+   body {
+      font-size:12pt;
+      max-width:100%;
+   }
+
+   a, a:visited {
+      text-decoration: underline;
+   }
+
+   hr {
+      visibility: hidden;
+      page-break-before: always;
+   }
+
+   pre, blockquote {
+      padding-right: 1em;
+      page-break-inside: avoid;
+   }
+
+   tr, img {
+      page-break-inside: avoid;
+   }
+
+   img {
+      max-width: 100% !important;
+   }
+
+   @page :left {
+      margin: 15mm 20mm 15mm 10mm;
+   }
+
+   @page :right {
+      margin: 15mm 10mm 15mm 20mm;
+   }
+
+   p, h2, h3 {
+      orphans: 3; widows: 3;
+   }
+
+   h2, h3 {
+      page-break-after: avoid;
+   }
+}
+</style>
+
+
+
+</head>
+
+<body>
+<h1>PERFORMANCE: captureOutput() is much faster than capture.output()</h1>
+
+<p>by Henrik Bengtsson on 2014-05-26
+(keywords: R, performance, speed)</p>
+
+<p>The R function capture.output() can be used to &ldquo;collect&rdquo; the output of functions such as cat() and print() to strings.  For example,</p>
+
+<pre><code class="r">&gt; s &lt;- capture.output({
++     cat(&quot;Hello\nworld!\n&quot;)
++     print(pi)
++ })
+&gt; s
+[1] &quot;Hello&quot;        &quot;world!&quot;       &quot;[1] 3.141593&quot;
+</code></pre>
+
+<p>More precisely, it captures all output sent to the <a href="http://www.wikipedia.org/wiki/Standard_streams">standard output</a> and returns a character vector where each element correspond to a line of output.  By the way, it does not capture the output sent to the standard error, e.g. <code>cat(&quot;Hello\nworld!\n&quot;, file=stderr())</code> and <code>message(&quot;Hello\nworld!\n&quot;)</code>.</p>
+
+<p>However, as currently implemented (R 3.1.0), this function is <a href="https://stat.ethz.ch/pipermail/r-devel/2014-February/068349.html">very slow</a> in capturing a large number of lines. Its processing time is approximately <em>exponential</em> in the number of lines capture, e.g. on my notebook 10,000 lines take 0.7 seconds to capture, whereas 50,000 take 12 seconds, and 100,000 take 42 seconds.  The culprit is textConnection() which capture.output() utilizes.  Without going in to the <a href="https://github.com/wch/r-source/blob/R-3-1-branch/src/main/connections.c#L2920-2960">details</a>, it turns out that textConnection() copies lines one by one internally, which is extremely inefficient.</p>
+
+<p><strong>The captureOutput() function of <a href="http://cran.r-project.org/package=R.utils">R.utils</a> does not have this problem.</strong>  Its processing time is <em>linear</em> in the number of lines and characters, because it relies on rawConnection() instead of textConnection().  For instance, 100,000 lines take 0.2 seconds and 1,000,000 lines take 2.5 seconds to captures when the lines are 100 characters long.  For 100,000 lines with 1000 characters it takes 2.4 seconds.</p>
+
+<h2>Benchmarking</h2>
+
+<p>The above benchmark results were obtained as following.  We first create a function that generates a string with a large number of lines:</p>
+
+<pre><code class="r">&gt; lineBuffer &lt;- function(n, len) {
++     line &lt;- paste(c(rep(letters, length.out = len), &quot;\n&quot;), collapse = &quot;&quot;)
++     line &lt;- charToRaw(line)
++     lines &lt;- rep(line, times = n)
++     rawToChar(lines, multiple = FALSE)
++ }
+</code></pre>
+
+<p>For example,</p>
+
+<pre><code class="r">&gt; cat(lineBuffer(n = 2, len = 10))
+abcdefghij
+abcdefghij
+</code></pre>
+
+<p>For very long character vectors paste() becomes very slow, which is why rawToChar() is used above.</p>
+
+<p>Next, lets create a function that measures the processing time for a capture function to capture the output of a given number of lines:</p>
+
+<pre><code class="r">&gt; benchmark &lt;- function(fcn, n, len) {
++     x &lt;- lineBuffer(n, len)
++     system.time({
++         fcn(cat(x))
++     }, gcFirst = TRUE)[[3]]
++ }
+</code></pre>
+
+<p>Note that the measured processing time neither includes the creation of the line buffer string nor the garbage collection.</p>
+
+<p>The functions to be benchmarked are:</p>
+
+<pre><code class="r">&gt; fcns &lt;- list(capture.output = capture.output, captureOutput = captureOutput)
+</code></pre>
+
+<p>and we choose to benchmark for outputs with a variety number of lines:</p>
+
+<pre><code class="r">&gt; ns &lt;- c(1, 10, 100, 1000, 10000, 25000, 50000, 75000, 1e+05)
+</code></pre>
+
+<p>Finally, lets benchmark all of the above with lines of length 100 and 1000 characters:</p>
+
+<pre><code class="r">&gt; benchmarkAll &lt;- function(ns, len) {
++     stats &lt;- lapply(ns, FUN = function(n) {
++         message(sprintf(&quot;n=%d&quot;, n))
++         t &lt;- sapply(fcns, FUN = benchmark, n = n, len = len)
++         data.frame(name = names(t), n = n, time = unname(t))
++     })
++     Reduce(rbind, stats)
++ }
+&gt; stats_100 &lt;- benchmarkAll(ns, len = 100L)
+&gt; stats_1000 &lt;- benchmarkAll(ns, len = 1000L)
+</code></pre>
+
+<p>The results are:</p>
+
+<table><thead>
+<tr>
+<th align="right">n</th>
+<th align="right">capture.output(100)</th>
+<th align="right">captureOutput(100)</th>
+<th align="right">capture.output(1000)</th>
+<th align="right">captureOutput(1000)</th>
+</tr>
+</thead><tbody>
+<tr>
+<td align="right">1</td>
+<td align="right">0.00</td>
+<td align="right">0.00</td>
+<td align="right">0.00</td>
+<td align="right">0.00</td>
+</tr>
+<tr>
+<td align="right">10</td>
+<td align="right">0.00</td>
+<td align="right">0.00</td>
+<td align="right">0.00</td>
+<td align="right">0.00</td>
+</tr>
+<tr>
+<td align="right">100</td>
+<td align="right">0.00</td>
+<td align="right">0.00</td>
+<td align="right">0.01</td>
+<td align="right">0.00</td>
+</tr>
+<tr>
+<td align="right">1000</td>
+<td align="right">0.00</td>
+<td align="right">0.02</td>
+<td align="right">0.02</td>
+<td align="right">0.01</td>
+</tr>
+<tr>
+<td align="right">10000</td>
+<td align="right">0.69</td>
+<td align="right">0.02</td>
+<td align="right">0.80</td>
+<td align="right">0.21</td>
+</tr>
+<tr>
+<td align="right">25000</td>
+<td align="right">3.18</td>
+<td align="right">0.05</td>
+<td align="right">2.99</td>
+<td align="right">0.57</td>
+</tr>
+<tr>
+<td align="right">50000</td>
+<td align="right">11.88</td>
+<td align="right">0.15</td>
+<td align="right">10.33</td>
+<td align="right">1.17</td>
+</tr>
+<tr>
+<td align="right">75000</td>
+<td align="right">25.01</td>
+<td align="right">0.19</td>
+<td align="right">25.43</td>
+<td align="right">1.80</td>
+</tr>
+<tr>
+<td align="right">100000</td>
+<td align="right">41.73</td>
+<td align="right">0.24</td>
+<td align="right">46.34</td>
+<td align="right">2.41</td>
+</tr>
+</tbody></table>
+
+<p><em>Table: Benchmarking of captureOutput() and capture.output() for n lines of length 100 and 1000 characters. All times are in seconds.</em></p>
+
+<p><img src="data:image/png;base64,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" alt="captureOutput_vs_capture.output"/></p>
+
+<p><em>Figure: captureOutput() captures standard output much faster than capture.output().  The processing time for the latter grows exponentially in the number of lines captured whereas for the former it only grows linearly.</em></p>
+
+<p>These results will vary a little bit from run to run, particularly since we only benchmark once per setting.  This also explains why for some settings the processing time for lines with 1000 characters appears faster than the corresponding setting with 100 characters.  Averaging over multiple runs would remove this artifact.</p>
+
+<h2>Appendix</h2>
+
+<h3>Session information</h3>
+
+<pre><code class="r">R version 3.1.0 Patched (2014-05-21 r65711)
+Platform: x86_64-w64-mingw32/x64 (64-bit)
+
+locale:
+[1] LC_COLLATE=English_United States.1252 
+[2] LC_CTYPE=English_United States.1252   
+[3] LC_MONETARY=English_United States.1252
+[4] LC_NUMERIC=C                          
+[5] LC_TIME=English_United States.1252    
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+[1] markdown_0.7      plyr_1.8.1        R.cache_0.9.5     knitr_1.5.26     
+[5] ggplot2_1.0.0     R.devices_2.9.2   R.utils_1.32.5    R.oo_1.18.2      
+[9] R.methodsS3_1.6.2
+
+loaded via a namespace (and not attached):
+ [1] base64enc_0.1-1  colorspace_1.2-4 digest_0.6.4     evaluate_0.5.5  
+ [5] formatR_0.10     grid_3.1.0       gtable_0.1.2     labeling_0.2    
+ [9] MASS_7.3-33      mime_0.1.1       munsell_0.4.2    proto_0.3-10    
+[13] R.rsp_0.18.2     Rcpp_0.11.1      reshape2_1.4     scales_0.2.4    
+[17] stringr_0.6.2    tools_3.1.0     
+</code></pre>
+
+<p>Tables were generated using <a href="http://cran.r-project.org/package=plyr">plyr</a> and <a href="http://cran.r-project.org/package=knitr">knitr</a>,
+and graphics using <a href="http://cran.r-project.org/package=ggplot2">ggplot2</a>.</p>
+
+<h3>Reproducibility</h3>
+
+<p>This report was generated from an RSP-embedded Markdown <a href="https://gist.github.com/HenrikBengtsson/854d13a11a33b3d43ec3/raw/captureOutput.md.rsp">document</a> using <a href="http://cran.r-project.org/package=R.rsp">R.rsp</a> v0.18.2.</p>
+
+<!--
+It can be recompiled as `R.rsp::rfile("https://gist.github.com/HenrikBengtsson/854d13a11a33b3d43ec3/raw/captureOutput.md.rsp")`.
+-->
+
+</body>
+
+</html>
