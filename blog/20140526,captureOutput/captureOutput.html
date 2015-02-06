@@ -5,6 +5,18 @@
 
 <title>PERFORMANCE: captureOutput() is much faster than capture.output()</title>
 
+<script type="text/javascript">
+window.onload = function() {
+  var imgs = document.getElementsByTagName('img'), i, img;
+  for (i = 0; i < imgs.length; i++) {
+    img = imgs[i];
+    // center an image if it is the only element of its parent
+    if (img.parentElement.childElementCount === 1)
+      img.parentElement.style.textAlign = 'center';
+  }
+};
+</script>
+
 <!-- Styles for R syntax highlighter -->
 <style type="text/css">
    pre .operator,
@@ -45,9 +57,6 @@ var hljs=new function(){function m(p){return p.replace(/&/gm,"&amp;").replace(/<
 hljs.initHighlightingOnLoad();
 </script>
 
-<!-- MathJax scripts -->
-<script type="text/javascript" src="https://c328740.ssl.cf1.rackcdn.com/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
-</script>
 
 
 <style type="text/css">
@@ -99,7 +108,9 @@ a:visited {
 pre, img {
   max-width: 100%;
 }
-
+pre {
+  overflow-x: auto;
+}
 pre code {
    display: block; padding: 0.5em;
 }
@@ -207,7 +218,7 @@ hr {
 
 <p>More precisely, it captures all output sent to the <a href="http://www.wikipedia.org/wiki/Standard_streams">standard output</a> and returns a character vector where each element correspond to a line of output.  By the way, it does not capture the output sent to the standard error, e.g. <code>cat(&quot;Hello\nworld!\n&quot;, file=stderr())</code> and <code>message(&quot;Hello\nworld!\n&quot;)</code>.</p>
 
-<p>However, as currently implemented (R 3.1.0), this function is <a href="https://stat.ethz.ch/pipermail/r-devel/2014-February/068349.html">very slow</a> in capturing a large number of lines. Its processing time is approximately <em>exponential</em> in the number of lines capture, e.g. on my notebook 10,000 lines take 0.7 seconds to capture, whereas 50,000 take 12 seconds, and 100,000 take 42 seconds.  The culprit is textConnection() which capture.output() utilizes.  Without going in to the <a href="https://github.com/wch/r-source/blob/R-3-1-branch/src/main/connections.c#L2920-2960">details</a>, it turns out that textConnection() copies lines one by one internally, which is extremely inefficient.</p>
+<p>However, as currently implemented (R 3.1.0), this function is <a href="https://stat.ethz.ch/pipermail/r-devel/2014-February/068349.html">very slow</a> in capturing a large number of lines. Its processing time is approximately <em>quadratic (= O(n<sup>2</sup>))</em>, <del>exponential (= O(e<sup>n</sup>))</del> in the number of lines capture, e.g. on my notebook 10,000 lines take 0.7 seconds to capture, whereas 50,000 take 12 seconds, and 100,000 take 42 seconds.  The culprit is textConnection() which capture.output() utilizes.  Without going in to the <a href="https://github.com/wch/r-source/blob/R-3-1-branch/src/main/connections.c#L2920-2960">details</a>, it turns out that textConnection() copies lines one by one internally, which is extremely inefficient.</p>
 
 <p><strong>The captureOutput() function of <a href="http://cran.r-project.org/package=R.utils">R.utils</a> does not have this problem.</strong>  Its processing time is <em>linear</em> in the number of lines and characters, because it relies on rawConnection() instead of textConnection().  For instance, 100,000 lines take 0.2 seconds and 1,000,000 lines take 2.5 seconds to captures when the lines are 100 characters long.  For 100,000 lines with 1000 characters it takes 2.4 seconds.</p>
 
@@ -351,6 +362,9 @@ abcdefghij
 <p><em>Figure: captureOutput() captures standard output much faster than capture.output().  The processing time for the latter grows exponentially in the number of lines captured whereas for the former it only grows linearly.</em></p>
 
 <p>These results will vary a little bit from run to run, particularly since we only benchmark once per setting.  This also explains why for some settings the processing time for lines with 1000 characters appears faster than the corresponding setting with 100 characters.  Averaging over multiple runs would remove this artifact.</p>
+
+<p><strong>UPDATE:</strong><br/>
+2015-02-06: Thanks to Kevin Van Horn for pointing out that the growth of the <code>capture.output()</code> is probably not as extreme as <em>exponential</em> and suggests <em>quadratic</em> growth.</p>
 
 <h2>Appendix</h2>
 

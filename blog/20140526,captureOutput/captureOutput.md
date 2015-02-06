@@ -16,7 +16,7 @@ The R function capture.output() can be used to "collect" the output of functions
 ```
 More precisely, it captures all output sent to the [standard output](http://www.wikipedia.org/wiki/Standard_streams) and returns a character vector where each element correspond to a line of output.  By the way, it does not capture the output sent to the standard error, e.g. `cat("Hello\nworld!\n", file=stderr())` and `message("Hello\nworld!\n")`.
 
-However, as currently implemented (R 3.1.0), this function is [very slow](https://stat.ethz.ch/pipermail/r-devel/2014-February/068349.html) in capturing a large number of lines. Its processing time is approximately _exponential_ in the number of lines capture, e.g. on my notebook 10,000 lines take 0.7 seconds to capture, whereas 50,000 take 12 seconds, and 100,000 take 42 seconds.  The culprit is textConnection() which capture.output() utilizes.  Without going in to the [details](https://github.com/wch/r-source/blob/R-3-1-branch/src/main/connections.c#L2920-2960), it turns out that textConnection() copies lines one by one internally, which is extremely inefficient.
+However, as currently implemented (R 3.1.0), this function is [very slow](https://stat.ethz.ch/pipermail/r-devel/2014-February/068349.html) in capturing a large number of lines. Its processing time is approximately _quadratic (= O(n^(2)))_, ~~exponential (= O(e^(n)))~~ in the number of lines capture, e.g. on my notebook 10,000 lines take 0.7 seconds to capture, whereas 50,000 take 12 seconds, and 100,000 take 42 seconds.  The culprit is textConnection() which capture.output() utilizes.  Without going in to the [details](https://github.com/wch/r-source/blob/R-3-1-branch/src/main/connections.c#L2920-2960), it turns out that textConnection() copies lines one by one internally, which is extremely inefficient.
 
 **The captureOutput() function of [R.utils](http://cran.r-project.org/package=R.utils) does not have this problem.**  Its processing time is _linear_ in the number of lines and characters, because it relies on rawConnection() instead of textConnection().  For instance, 100,000 lines take 0.2 seconds and 1,000,000 lines take 2.5 seconds to captures when the lines are 100 characters long.  For 100,000 lines with 1000 characters it takes 2.4 seconds.
 
@@ -96,6 +96,9 @@ _Figure: captureOutput() captures standard output much faster than capture.outpu
 
 These results will vary a little bit from run to run, particularly since we only benchmark once per setting.  This also explains why for some settings the processing time for lines with 1000 characters appears faster than the corresponding setting with 100 characters.  Averaging over multiple runs would remove this artifact.
 
+
+**UPDATE:**  
+2015-02-06: Thanks to Kevin Van Horn for pointing out that the growth of the `capture.output()` is probably not as extreme as _exponential_ and suggests _quadratic_ growth.
 
 ## Appendix
 
