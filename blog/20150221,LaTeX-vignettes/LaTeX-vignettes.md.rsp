@@ -46,7 +46,7 @@ _Footnote:_ (\*) If one uses filename extension `*.tex`, then `R CMD check` will
 
 
 ### Why not use Sweave?
-It has always been possible to "hijack" the Sweave vignette engine to achieve the same thing by renaming the filename extension to `*.Rnw` and include the proper `\VignetteIndexEntry` markup.  This would trick R to compile it as a Sweave vignette (without Sweave markup) resulting in a PDF, which in practice would work as a plain LaTeX-to-PDF compiler.  The `R.rsp::tex` engine achieves the same without the "hack" and without the Sweave machinery.
+It has always been possible to "hijack" the Sweave vignette engine to achieve the same thing by renaming the filename extension to `*.Rnw` and including the proper `\VignetteIndexEntry` markup.  This would trick R to compile it as an Sweave vignette (without Sweave markup) resulting in a PDF, which in practice would work as a plain LaTeX-to-PDF compiler.  The `R.rsp::tex` engine achieves the same without the "hack" and without the Sweave machinery.
 
 
 ### Static PDFs?
