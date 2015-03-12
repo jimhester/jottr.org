@@ -19,6 +19,6 @@ We are pleased to announce our proposal '**[Subsetted and parallel computations 
 
 ## Related posts
 * [PACKAGE: matrixStats 0.13.1 - Methods that Apply to Rows and Columns of a Matrix (and Vectors)](http://www.jottr.org/2015/01/matrixStats-0.13.1.html)
-
+* [R Blogger posts on GSoC](http://www.r-bloggers.com/?s=Google+Summer+of+Code)
 
 [Subsetted and parallel computations in matrixStats]: https://github.com/rstats-gsoc/gsoc2015/wiki/matrixStats
