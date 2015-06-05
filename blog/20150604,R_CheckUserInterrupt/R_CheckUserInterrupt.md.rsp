@@ -1,4 +1,4 @@
-<%@meta title="PERFORMANCE: Checking R_CheckUserInterrupt() every 256 iteration is actually faster than ever 1,000,000 iteration"%>
+<%@meta title="PERFORMANCE: Calling R_CheckUserInterrupt() every 256 iteration is actually faster than ever 1,000,000 iteration"%>
 <%@meta author="Henrik Bengtsson"%>
 <%@meta keywords="R, native, C, performance, speed"%>
 <%@meta date="2015-06-04"%>
@@ -24,16 +24,16 @@ toTable <- function(stats, unit="ms", digits=2L, order=NULL, ...) {
 %>
 # <%@meta name="title"%>
 
-If your native code takes more than a few seconds to finish, it's a nice courtesy to the user to check for user interrupts (Ctrl-C) once in a while, say, every 1,000 or 1,000,000 iterations.  The C-level API of R provides the `R_CheckUserInterrupt()` for this (see 'Writing R Extensions' for more information on this function).  Here's what the code would typically look like:
+If your native code takes more than a few seconds to finish, it's a nice courtesy to the user to check for user interrupts (Ctrl-C) once in a while, say, every 1,000 or 1,000,000 iteration.  The C-level API of R provides the `R_CheckUserInterrupt()` for this (see 'Writing R Extensions' for more information on this function).  Here's what the code would typically look like:
 ```c
 for (int ii = 0; ii < n; ii++) {
   /* Some computational expensive code */
   if (ii % 1000 == 0) R_CheckUserInterrupt()
 }
 ```
-This uses the modulo operator `%` and tests when it is zero, which happens every 1,000 iterations.  When this occurs, it calls `R_CheckUserInterrupt()`, which will interrupt the processing and "return to R" whenever an interrupt is detected.
+This uses the modulo operator `%` and tests when it is zero, which happens every 1,000 iteration.  When this occurs, it calls `R_CheckUserInterrupt()`, which will interrupt the processing and "return to R" whenever an interrupt is detected.
 
-Interestingly, it turns out that, it's _significantly faster to do this check every $k=2^m$ iteration_, e.g. instead of doing it every 1,000 iterations, it's faster to do it every 1,024 iterations,.  Similarly, instead of, say, doing it every 1,000,000 iteration, do it every 1,048,576 - not one less (1,048,575) or one more (1,048,577).  The difference is so large that it is even 2-3 times faster to call `R_CheckUserInterrupt()` every 256 iteration rather than, say, every 1,000,000 iteration, which at least to me was a bit counter intuitive the first time I observed it.
+Interestingly, it turns out that, it's _significantly faster to do this check every $k=2^m$ iteration_, e.g. instead of doing it every 1,000 iteration, it's faster to do it every 1,024 iteration.  Similarly, instead of, say, doing it every 1,000,000 iteration, do it every 1,048,576 - not one less (1,048,575) or one more (1,048,577).  The difference is so large that it is even 2-3 times faster to call `R_CheckUserInterrupt()` every 256 iteration rather than, say, every 1,000,000 iteration, which at least to me was a bit counter intuitive the first time I observed it.
 
 Below are some benchmark statistics supporting the claim that testing / calculating `ii % k == 0` is faster for `k=2^m` (blue) than for other choices of `k` (red).
 
@@ -96,7 +96,7 @@ So why is `ii % k` faster to calculate for $k=2^m$?  I can only speculate.  For 
 
 
 ## Details on how the benchmarking was done
-I used the [inline] package to generate a set of C-level functions with varying interrupt intervals ($k$).   I'm not passing $k$ as a parameter to these functions.  Instead, I use it as a constant value so that the compiler can optimize as far as possible, but also in order to immitate how most code is written.  This is why a generate multiple C functions.
+I used the [inline] package to generate a set of C-level functions with varying interrupt intervals ($k$).   I'm not passing $k$ as a parameter to these functions.  Instead, I use it as a constant value so that the compiler can optimize as far as possible, but also in order to imitate how most code is written.  This is why I generate multiple C functions.
 I benchmarked across a wide range of interval choices using the [microbenchmark] package.  The C functions (with corresponding R functions calling them) and the corresponding benchmark expressions to be called were generated as follows:
 ```r
 <% cat(grep("exists", strsplit(code, "\n")[[1]][-1], value=TRUE, invert=TRUE), sep="\n") %>
