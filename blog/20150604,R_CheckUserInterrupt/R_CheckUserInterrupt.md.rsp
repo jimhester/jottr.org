@@ -111,12 +111,15 @@ message("** Generating table")
 toTable(stats)
 %>
 
+I get similar results across operating systems, i.e. Windows, OS X and Linux.
 
-Feedback and comments are welcome!
+
+Feedback and comments are apprecated!
+
 
 To reproduce these results, do:
 ```r
-> path <- 'https://raw.githubusercontent.com/HenrikBengtsson/jottr.org/develop/blog/20150604%2CR_CheckUserInterrupt'
+> path <- 'https://raw.githubusercontent.com/HenrikBengtsson/jottr.org/master/blog/20150604%2CR_CheckUserInterrupt'
 > html <- R.rsp::rfile('R_CheckUserInterrupt.md.rsp', path=path)
 > !html  ## Open in browser
 ```
