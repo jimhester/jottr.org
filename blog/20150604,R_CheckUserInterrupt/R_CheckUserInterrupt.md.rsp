@@ -1,4 +1,4 @@
-<%@meta title="PERFORMANCE: Use R_CheckUserInterrupt() and use it every k=2^m iterations"%>
+<%@meta title="PERFORMANCE: Checking R_CheckUserInterrupt() every 256 iteration is actually faster than ever 1,000,000 iteration"%>
 <%@meta author="Henrik Bengtsson"%>
 <%@meta keywords="R, native, C, performance, speed"%>
 <%@meta date="2015-06-04"%>
@@ -35,7 +35,7 @@ This uses the modulo operator `%` and tests when it is zero, which happens every
 
 Interestingly, it turns out that, it's _significantly faster to do this check every $k=2^m$ iteration_, e.g. instead of doing it every 1,000 iterations, it's faster to do it every 1,024 iterations,.  Similarly, instead of, say, doing it every 1,000,000 iteration, do it every 1,048,576 - not one less (1,048,575) or one more (1,048,577).  The difference is so large that it is even 2-3 times faster to call `R_CheckUserInterrupt()` every 256 iteration rather than, say, every 1,000,000 iteration, which at least to me was a bit counter intuitive the first time I observed it.
 
-Below are some benchmark statistics supporting the claim that testing / calculating `ii % k == 0` is faster for `k=2^m` (blue) than for other choises of `k` (red).
+Below are some benchmark statistics supporting the claim that testing / calculating `ii % k == 0` is faster for `k=2^m` (blue) than for other choices of `k` (red).
 
 <%
 message("** Generating C functions and benchmark expressions")
