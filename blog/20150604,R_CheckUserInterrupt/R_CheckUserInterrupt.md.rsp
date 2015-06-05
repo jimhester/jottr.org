@@ -1,0 +1,126 @@
+<%@meta title="PERFORMANCE: Use R_CheckUserInterrupt() and use it every k=2^m iterations"%>
+<%@meta author="Henrik Bengtsson"%>
+<%@meta keywords="R, native, C, performance, speed"%>
+<%@meta date="2015-06-04"%>
+<%
+R.utils::use("R.utils")
+use("R.devices")
+use("inline")
+use("microbenchmark")
+use("knitr") ## kable()
+devOptions("png", width=640)
+
+toTable <- function(stats, unit="ms", digits=2L, order=NULL, ...) {
+  ## AD HOC: Hack to speedup summary() of microbenchmark by
+  ## avoiding the multiple testing part at the end
+  summary <- eval(parse(text=gsub("convert_to_unit", "microbenchmark:::convert_to_unit", gsub("require", "FALSE && require", deparse(microbenchmark:::summary.microbenchmark)))))
+  s <- summary(stats, unit=unit)
+  s$neval <- NULL
+  s$cld <- NULL
+  rownames(s) <- NULL
+  if (!is.null(order)) s <- s[order(s[[order]]),]
+  print(knitr::kable(s, digits=digits, ...))
+}
+%>
+# <%@meta name="title"%>
+
+If your native code takes more than a few seconds to finish, it's a nice courtesy to the user to check for user interrupts (Ctrl-C) once in a while, say, every 1,000 or 1,000,000 iterations.  The C-level API of R provides the `R_CheckUserInterrupt()` for this (see 'Writing R Extensions' for more information on this function).  Here's what the code would typically look like:
+```c
+for (int ii = 0; ii < n; ii++) {
+  /* Some computational expensive code */
+  if (ii % 1000 == 0) R_CheckUserInterrupt()
+}
+```
+This uses the modulo operator `%` and tests when it is zero, which happens every 1,000 iterations.  When this occurs, it calls `R_CheckUserInterrupt()`, which will interrupt the processing and "return to R" whenever an interrupt is detected.
+
+Interestingly, it turns out that, it's _significantly faster to do this check every $k=2^m$ iteration_, e.g. instead of doing it every 1,000 iterations, it's faster to do it every 1,024 iterations,.  Similarly, instead of, say, doing it every 1,000,000 iteration, do it every 1,048,576 - not one less (1,048,575) or one more (1,048,577).  The difference is so large that it is even 2-3 times faster to call `R_CheckUserInterrupt()` every 256 iteration rather than, say, every 1,000,000 iteration, which at least to me was a bit counter intuitive the first time I observed it.
+
+Below are some benchmark statistics supporting the claim that testing / calculating `ii % k == 0` is faster for `k=2^m` (blue) than for other choises of `k` (red).
+
+<%
+message("** Generating C functions and benchmark expressions")
+code <- '
+## The interrupt intervals to benchmark
+## (a) Classical values
+ks <- c(1, 10, 100, 1000, 10e3, 100e3, 1e6)
+## (b) 2^k values and the ones before and after
+ms <- c(2, 5, 8, 10, 16, 20)
+as <- c(-1, 0, +1) + rep(2^ms, each=3)
+
+## List of unevaluated expressions to benchmark
+mbexpr <- list()
+
+for (k in sort(c(ks, as))) {
+  name <- sprintf("every_%d", k)
+
+  ## The C function
+  if (!exists(name, mode="function"))
+  assign(name, inline::cfunction(c(length="integer"), body=sprintf("
+    int i, n = asInteger(length);
+    for (i=0; i < n; i++) {
+      if (i %% %d == 0) R_CheckUserInterrupt();
+    }
+    return ScalarInteger(n);
+  ", k)))
+
+  ## The corresponding expression to benchmark
+  mbexpr <- c(mbexpr, substitute(every(n), list(every=as.symbol(name))))
+}
+'
+eval(parse(text=code))
+message("** Benchmarking")
+n <- 10e6
+stats <- microbenchmark::microbenchmark(list=mbexpr, times=100)
+
+message("** Summarizing")
+ks <- as.integer(gsub("(n)", "", gsub("every_", "", stats$expr), fixed=TRUE))
+stats$`exactly 2^m` <- (ks %in% 2^ms)
+ks <- factor(ks, levels=sort(unique(ks)))
+stats$k <- ks
+%>
+![Boxplot showing that testing every 2^k:th iteration is faster](<%=toPNG("boxplot", aspectRatio=2/3, {
+  message("** Generating plot")
+  use("ggplot2")
+  p <- ggplot(stats, aes(k, time/1e6))
+  p <- p + geom_boxplot(aes(fill=`exactly 2^m`))
+  p <- p + scale_y_log10()
+  p <- p + ylab("time (ms) - log scale")
+  p <- p + xlab("Interrupt intervals (every k:th iteration)")
+  p <- p + theme(axis.text.x=element_text(angle=90, hjust=1, vjust=0.5))
+  print(p)
+})%>)
+
+Note that the times are on the log scale (the results are also tabulated at the end of this post).  Now, will it make a big difference to the overall performance of you code if you choose, say, 1,048,576 instead of 1,000,000?  Probably not, but on the other hand, it doesn't hurt to pick a check interval that is a $2^m$ integer.
+
+So why is `ii % k` faster to calculate for $k=2^m$?  I can only speculate.  For instance, the integer $2^m$ is a binary number with all bits but one set to zero.  It might be that this is faster to test for than other bit patterns, but I don't know if this because of how the assembly code is optimized or if it goes down to the hardware/CPU level.  I'd be interested to get feedback and ideas on this by one of our compiler/hardware experts.
+
+
+## Details on how the benchmarking was done
+I used the [inline] package to generate a set of C-level functions with varying interrupt intervals ($k$).   I'm not passing $k$ as a parameter to these functions.  Instead, I use it as a constant value so that the compiler can optimize as far as possible, but also in order to immitate how most code is written.  This is why a generate multiple C functions.
+I benchmarked across a wide range of interval choices using the [microbenchmark] package.  The C functions (with corresponding R functions calling them) and the corresponding benchmark expressions to be called were generated as follows:
+```r
+<% cat(grep("exists", strsplit(code, "\n")[[1]][-1], value=TRUE, invert=TRUE), sep="\n") %>
+```
+The actual benchmarking of the <%=length(mbexpr)%> cases was then done by calling:
+```r
+n <- 10e6  ## Number of iterations
+stats <- microbenchmark::microbenchmark(list=mbexpr)
+```
+<%
+message("** Generating table")
+toTable(stats)
+%>
+
+
+Feedback and comments are welcome!
+
+To reproduce these results, do:
+```r
+> html <- R.rsp::rfile('http://jottr.org/R_CheckUserInterrupt.md.rsp')
+> !html
+```
+
+[inline]: http://cran.r-project.org/package=inline
+[microbenchmark]: http://cran.r-project.org/package=microbenchmark
+
+<% message("** DONE!") %>
