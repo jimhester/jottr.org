@@ -116,8 +116,9 @@ Feedback and comments are welcome!
 
 To reproduce these results, do:
 ```r
-> html <- R.rsp::rfile('http://jottr.org/R_CheckUserInterrupt.md.rsp')
-> !html
+> path <- 'https://raw.githubusercontent.com/HenrikBengtsson/jottr.org/develop/blog/20150604%2CR_CheckUserInterrupt'
+> html <- R.rsp::rfile('R_CheckUserInterrupt.md.rsp', path=path)
+> !html  ## Open in browser
 ```
 
 [inline]: http://cran.r-project.org/package=inline
