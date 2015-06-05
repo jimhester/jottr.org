@@ -1,6 +1,6 @@
 <%@meta title="PERFORMANCE: Calling R_CheckUserInterrupt() every 256 iteration is actually faster than ever 1,000,000 iteration"%>
 <%@meta author="Henrik Bengtsson"%>
-<%@meta keywords="R, native, C, performance, speed"%>
+<%@meta keywords="R, native, C, performance, speed, user interrupts, modulo"%>
 <%@meta date="2015-06-04"%>
 <%
 R.utils::use("R.utils")
