@@ -1,6 +1,6 @@
-<%@meta title="PERFORMANCE: Use R_CheckUserInterrupt() and use it every k=2^m iterations"%>
+<%@meta title="PERFORMANCE: Calling R_CheckUserInterrupt() every 256 iteration is actually faster than ever 1,000,000 iteration"%>
 <%@meta author="Henrik Bengtsson"%>
-<%@meta keywords="R, native, C, performance, speed"%>
+<%@meta keywords="R, native, C, performance, speed, user interrupts, modulo"%>
 <%@meta date="2015-06-04"%>
 <%
 R.utils::use("R.utils")
@@ -24,18 +24,18 @@ toTable <- function(stats, unit="ms", digits=2L, order=NULL, ...) {
 %>
 # <%@meta name="title"%>
 
-If your native code takes more than a few seconds to finish, it's a nice courtesy to the user to check for user interrupts (Ctrl-C) once in a while, say, every 1,000 or 1,000,000 iterations.  The C-level API of R provides the `R_CheckUserInterrupt()` for this (see 'Writing R Extensions' for more information on this function).  Here's what the code would typically look like:
+If your native code takes more than a few seconds to finish, it is a nice courtesy to the user to check for user interrupts (Ctrl-C) once in a while, say, every 1,000 or 1,000,000 iteration.  The C-level API of R provides `R_CheckUserInterrupt()` for this (see 'Writing R Extensions' for more information on this function).  Here's what the code would typically look like:
 ```c
 for (int ii = 0; ii < n; ii++) {
   /* Some computational expensive code */
   if (ii % 1000 == 0) R_CheckUserInterrupt()
 }
 ```
-This uses the modulo operator `%` and tests when it is zero, which happens every 1,000 iterations.  When this occurs, it calls `R_CheckUserInterrupt()`, which will interrupt the processing and "return to R" whenever an interrupt is detected.
+This uses the modulo operator `%` and tests when it is zero, which happens every 1,000 iteration.  When this occurs, it calls `R_CheckUserInterrupt()`, which will interrupt the processing and "return to R" whenever an interrupt is detected.
 
-Interestingly, it turns out that, it's _significantly faster to do this check every $k=2^m$ iteration_, e.g. instead of doing it every 1,000 iterations, it's faster to do it every 1,024 iterations,.  Similarly, instead of, say, doing it every 1,000,000 iteration, do it every 1,048,576 - not one less (1,048,575) or one more (1,048,577).  The difference is so large that it is even 2-3 times faster to call `R_CheckUserInterrupt()` every 256 iteration rather than, say, every 1,000,000 iteration, which at least to me was a bit counter intuitive the first time I observed it.
+Interestingly, it turns out that, it is _significantly faster to do this check every $k=2^m$ iteration_, e.g. instead of doing it every 1,000 iteration, it is faster to do it every 1,024 iteration.  Similarly, instead of, say, doing it every 1,000,000 iteration, do it every 1,048,576 - not one less (1,048,575) or one more (1,048,577).  The difference is so large that it is even 2-3 times faster to call `R_CheckUserInterrupt()` every 256 iteration rather than, say, every 1,000,000 iteration, which at least to me was a bit counter intuitive the first time I observed it.
 
-Below are some benchmark statistics supporting the claim that testing / calculating `ii % k == 0` is faster for `k=2^m` (blue) than for other choises of `k` (red).
+Below are some benchmark statistics supporting the claim that testing / calculating `ii % k == 0` is faster for $k=2^m$ (blue) than for other choices of $k$ (red).
 
 <%
 message("** Generating C functions and benchmark expressions")
@@ -90,13 +90,13 @@ stats$k <- ks
   print(p)
 })%>)
 
-Note that the times are on the log scale (the results are also tabulated at the end of this post).  Now, will it make a big difference to the overall performance of you code if you choose, say, 1,048,576 instead of 1,000,000?  Probably not, but on the other hand, it doesn't hurt to pick a check interval that is a $2^m$ integer.
+Note that the times are on the log scale (the results are also tabulated at the end of this post).  Now, will it make a big difference to the overall performance of you code if you choose, say, 1,048,576 instead of 1,000,000?  Probably not, but on the other hand, it does not hurt to pick an interval that is a $2^m$ integer.  This observation may also be useful in algorithms that make lots of use of the modulo operator.
 
-So why is `ii % k` faster to calculate for $k=2^m$?  I can only speculate.  For instance, the integer $2^m$ is a binary number with all bits but one set to zero.  It might be that this is faster to test for than other bit patterns, but I don't know if this because of how the assembly code is optimized or if it goes down to the hardware/CPU level.  I'd be interested to get feedback and ideas on this by one of our compiler/hardware experts.
+So why is `ii % k == 0` a faster test when $k=2^m$?  I can only speculate.  For instance, the integer $2^m$ is a binary number with all bits but one set to zero.  It might be that this is faster to test for than other bit patterns, but I don't know if this is because of how the native code is optimized by the compiler and/or if it goes down to the hardware/CPU level.  I'd be interested in feedback and hear your thoughts on this.
 
 
 ## Details on how the benchmarking was done
-I used the [inline] package to generate a set of C-level functions with varying interrupt intervals ($k$).   I'm not passing $k$ as a parameter to these functions.  Instead, I use it as a constant value so that the compiler can optimize as far as possible, but also in order to immitate how most code is written.  This is why a generate multiple C functions.
+I used the [inline] package to generate a set of C-level functions with varying interrupt intervals ($k$).   I'm not passing $k$ as a parameter to these functions.  Instead, I use it as a constant value so that the compiler can optimize as far as possible, but also in order to imitate how most code is written.  This is why I generate multiple C functions.
 I benchmarked across a wide range of interval choices using the [microbenchmark] package.  The C functions (with corresponding R functions calling them) and the corresponding benchmark expressions to be called were generated as follows:
 ```r
 <% cat(grep("exists", strsplit(code, "\n")[[1]][-1], value=TRUE, invert=TRUE), sep="\n") %>
@@ -111,12 +111,15 @@ message("** Generating table")
 toTable(stats)
 %>
 
+I get similar results across various operating systems (Windows, OS X and Linux) all using GNU Compiler Collection (GCC).
 
-Feedback and comments are welcome!
+
+Feedback and comments are apprecated!
+
 
 To reproduce these results, do:
 ```r
-> path <- 'https://raw.githubusercontent.com/HenrikBengtsson/jottr.org/develop/blog/20150604%2CR_CheckUserInterrupt'
+> path <- 'https://raw.githubusercontent.com/HenrikBengtsson/jottr.org/master/blog/20150604%2CR_CheckUserInterrupt'
 > html <- R.rsp::rfile('R_CheckUserInterrupt.md.rsp', path=path)
 > !html  ## Open in browser
 ```
